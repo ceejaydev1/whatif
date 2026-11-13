@@ -51,6 +51,15 @@ svg .m{fill:var(--mut);font-size:11px}
 .h{display:flex;justify-content:space-between;gap:8px;align-items:center;border-top:1px solid var(--bd);padding:10px 0;flex-wrap:wrap}
 .h:first-of-type{border-top:0}
 .tag{font-size:.8rem;color:var(--mut)}
+textarea{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;width:100%;font:inherit;font-size:1.05rem;color:var(--tx);resize:vertical;min-height:84px}
+textarea:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.chip{border-radius:99px;padding:5px 12px;font-size:.85rem}
+.ctr{font-size:.8rem;color:var(--mut);text-align:right;margin-top:2px}
+.tabs{align-items:center}
+.qt{font-size:1.15rem;margin-bottom:2px}
+.hh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.hh h2{margin:0}
+.foot{font-size:.8rem;color:var(--mut);max-width:70ch;margin:0 0 8px}
 </style>
 </head>
 <body>
@@ -60,10 +69,14 @@ svg .m{fill:var(--mut);font-size:11px}
 
 <section class="card" aria-label="Your decision">
 <label for="ttl">Your decision</label>
-<input type="text" id="ttl" placeholder="e.g. Should I buy a laptop now or save for another three months?" autocomplete="off">
+<textarea id="ttl" rows="3" maxlength="300" placeholder="Add details for a better estimate. e.g. Should I buy a ₱35,000 laptop now for my capstone, or save for 3 months? My current laptop is slow but works."></textarea>
+<div class="ctr" id="ctr">0 / 300</div>
 <div class="row">
 <button class="pri" id="go" type="button">Simulate</button>
-<button id="ex" type="button">Try the laptop example</button>
+<span class="tag">Try:</span>
+<button class="chip" type="button" data-ex="Should I buy a ₱35,000 laptop now for my capstone, or save for 3 more months? My current laptop is slow but works.">Laptop now or later</button>
+<button class="chip" type="button" data-ex="Should I take a part-time job now or focus on my capstone until April?">Job or capstone</button>
+<button class="chip" type="button" data-ex="Should I rent a boarding house near school or commute from home every day?">Boarding or commute</button>
 </div>
 <div class="status" id="st" role="status"></div>
 </section>
@@ -72,15 +85,17 @@ svg .m{fill:var(--mut);font-size:11px}
 <div class="tabs" role="tablist">
 <button role="tab" id="t1" aria-selected="true" type="button">Compare outcomes</button>
 <button role="tab" id="t2" aria-selected="false" type="button">Decision tree</button>
+<button id="cp" type="button" style="margin-left:auto">Copy summary</button>
 </div>
 <div id="cmp"></div>
 <div id="tree" class="scroll" hidden></div>
 </section>
 
 <section class="card" aria-label="Saved decisions">
-<h2>Previous decisions</h2>
+<div class="hh"><h2>Previous decisions</h2><button id="clr" type="button">Clear all</button></div>
 <div id="hist"></div>
 </section>
+<p class="foot">WhatIf gives estimates to help you think, not predictions. For medical, legal or urgent financial decisions, talk to a professional.</p>
 </main>
 <script>
 window.onerror=(m)=>{let b=document.getElementById('err');if(!b){b=document.createElement('div');b.id='err';b.style.cssText='background:#d0415a;color:#fff;padding:8px 12px;position:sticky;top:0;z-index:9';document.body.prepend(b)}b.textContent='Something broke: '+m};
@@ -122,13 +137,13 @@ function draw(){
  if(!S){$('#rcard').hidden=true;return}
  $('#rcard').hidden=false;
  const R=S.options.map(an),bi=R.reduce((m,r,i)=>r.ev>R[m].ev?i:m,0);
- $('#cmp').innerHTML=`<div class="cmp">${S.options.map((o,i)=>{const r=R[i];
+ $('#cmp').innerHTML=`<h2 class="qt">${esc(S.title)}</h2><p class="tag" style="margin:0 0 12px">${S.ai===false?'Offline estimate: a generic template, not tailored to your decision':'AI estimate'}</p><div class="cmp">${S.options.map((o,i)=>{const r=R[i];
  return`<div class="res ${i===bi?'win':''}"><h3>${esc(o.name)}${i===bi?'<span class="badge">Best expected</span>':''}</h3>
  <div class="ev ${cls(r.ev)}">${fmt(r.ev)}</div><div class="tag">expected impact score (−10 to +10)</div>
  <div class="bar"><i style="${r.ev>=0?'left:50%':'right:50%'};width:${Math.abs(r.ev)*5}%;background:var(${r.ev>=0?'--pos':'--neg'})"></i></div>
  <div class="stats"><span>Worst ${fmt(r.worst)}</span><span>${r.pos.toFixed(0)}% chance of a good result</span><span>Best ${fmt(r.best)}</span></div>
  <ul class="oc">${o.outcomes.map(c=>`<li><span>${esc(c.t)}</span><b class="${cls(c.i)}">${Math.round(c.p/r.tot*100)}% · ${sg(c.i)}${Math.abs(c.i)}</b></li>`).join('')}</ul></div>`}).join('')}</div>
- <div class="verdict">${verdict(R,bi)}</div>`;
+ <div class="verdict">${verdict(R,bi)}</div>${S.note?`<p class="tag" style="margin:10px 0 0">Assumptions: ${esc(S.note.replace(/[.\s]+$/,''))}. These are estimates, not predictions.</p>`:''}`;
  tree(R)}
 function tree(R){
  const rowH=40,n=S.options.reduce((a,o)=>a+o.outcomes.length,0),Ht=Math.max(n*rowH+20,100),X1=130,X2=330,X3=520;let k=0;
@@ -152,22 +167,28 @@ async function simulate(){
  const q=$('#ttl').value.trim();
  if(!q){say('Type a decision first.');return}
  const b=$('#go');b.disabled=true;say('Simulating possible outcomes…');
- let opts=null,used=false;
+ let opts=null,used=false,note='',errmsg='';
  try{
   const r=await fetch('/api/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({q})});
-  if(r.ok){opts=clean(await r.json());used=!!opts}
+  if(r.ok){const jd=await r.json();opts=clean(jd);used=!!opts;note=String(jd.note||'').slice(0,200)}else{try{errmsg=(await r.json()).error||('HTTP '+r.status)}catch(e){errmsg='HTTP '+r.status}}
  }catch(e){opts=null}
  if(!opts)opts=local(q);
- S={id:'d'+Date.now().toString(36),title:q,date:Date.now(),options:opts};
+ S={id:'d'+Date.now().toString(36),title:q,date:Date.now(),options:opts,note:used?note:'',ai:used};
  H.unshift(JSON.parse(JSON.stringify(S)));H=H.slice(0,30);persist();
- draw();hist();say(used?'':'Showing a quick offline estimate because the AI request failed.');
+ draw();hist();say(used?'':'Offline estimate shown. '+(errmsg||'The AI returned no valid answer.'));
  b.disabled=false;$('#rcard').scrollIntoView({behavior:'smooth',block:'start'})}
 $('#go').onclick=simulate;
-$('#ttl').addEventListener('keydown',e=>{if(e.key==='Enter')simulate()});
-$('#ex').onclick=()=>{$('#ttl').value='Should I buy a laptop now or save for another three months?';simulate()};
+$('#ttl').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();simulate()}});
+const ctr=()=>{$('#ctr').textContent=$('#ttl').value.length+' / 300'};
+$('#ttl').addEventListener('input',ctr);
+document.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{$('#ttl').value=b.dataset.ex;ctr();simulate()});
+$('#clr').onclick=()=>{if(H.length&&confirm('Delete all saved decisions?')){H=[];persist();hist()}};
+$('#cp').onclick=async()=>{if(!S)return;const R=S.options.map(an);
+ const t=S.title+'\n\n'+S.options.map((o,i)=>o.name+' (expected '+fmt(R[i].ev)+')\n'+o.outcomes.map(c=>'- '+c.t+': '+Math.round(c.p/R[i].tot*100)+'%, impact '+sg(c.i)+Math.abs(c.i)).join('\n')).join('\n\n')+(S.note?'\n\nAssumptions: '+S.note:'');
+ try{await navigator.clipboard.writeText(t);say('Summary copied.')}catch(e){say('Could not copy in this browser.')}};
 $('#t1').onclick=$('#t2').onclick=e=>{const one=e.target.id==='t1';$('#t1').setAttribute('aria-selected',one);$('#t2').setAttribute('aria-selected',!one);$('#cmp').hidden=!one;$('#tree').hidden=one};
 $('#hist').addEventListener('click',e=>{const d=e.target.dataset;
- if(d.load){const h=H.find(x=>x.id===d.load);if(h){S=JSON.parse(JSON.stringify(h));$('#ttl').value=S.title;draw();$('#rcard').scrollIntoView({behavior:'smooth'})}}
+ if(d.load){const h=H.find(x=>x.id===d.load);if(h){S=JSON.parse(JSON.stringify(h));$('#ttl').value=S.title;ctr();draw();$('#rcard').scrollIntoView({behavior:'smooth'})}}
  else if(d.del){H=H.filter(x=>x.id!==d.del);persist();hist()}});
 hist();
 </script>
