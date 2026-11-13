@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WhatIf – Decision Consequence Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f5f8;--card:#fff;--tx:#1b2233;--mut:#667089;--bd:#dde1ea;--ac:#4a4fd6;--acs:#e9eafb;--pos:#16896a;--neg:#d0415a;--neu:#8a93a8;--onac:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151f;--card:#1b2030;--tx:#e8ebf4;--mut:#9aa3ba;--bd:#2c3348;--ac:#8c90ff;--acs:#262a4a;--pos:#3ed1a3;--neg:#ff7a90;--neu:#7c86a0;--onac:#12151f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12151f;--card:#1b2030;--tx:#e8ebf4;--mut:#9aa3ba;--bd:#2c3348;--ac:#8c90ff;--acs:#262a4a;--pos:#3ed1a3;--neg:#ff7a90;--neu:#7c86a0;--onac:#12151f;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:20px 16px 60px}
+h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;margin:0;letter-spacing:-.01em}
+h1{font-size:2rem;font-weight:800}
+h2{font-size:1.25rem;margin-bottom:10px}
+.sub{color:var(--mut);margin:4px 0 20px;max-width:60ch}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:16px}
+input,button{font:inherit;color:var(--tx)}
+input[type=text]{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;width:100%;font-size:1.05rem}
+input:focus-visible,button:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+label{font-size:.85rem;color:var(--mut);display:block;margin-bottom:4px}
+button{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px 14px;cursor:pointer}
+button:hover{border-color:var(--ac)}
+button:disabled{opacity:.6;cursor:wait}
+button.pri{background:var(--ac);border-color:var(--ac);color:var(--onac);font-weight:500}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.status{font-size:.9rem;color:var(--mut);margin-top:8px;min-height:1.3em}
+.tabs{display:flex;gap:4px;margin-bottom:12px}
+.tabs button[aria-selected=true]{background:var(--acs);border-color:var(--ac)}
+.cmp{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.res{border:1px solid var(--bd);border-radius:10px;padding:12px}
+.res.win{border-color:var(--pos);box-shadow:0 0 0 1px var(--pos)}
+.badge{font-size:.75rem;background:var(--pos);color:#fff;border-radius:99px;padding:1px 8px;margin-left:6px}
+.bar{position:relative;height:12px;background:var(--bg);border-radius:6px;margin:10px 0 4px}
+.bar::after{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--mut)}
+.bar i{position:absolute;top:0;bottom:0;border-radius:6px}
+.stats{display:flex;justify-content:space-between;font-size:.85rem;color:var(--mut);flex-wrap:wrap;gap:4px}
+.ev{font:800 1.8rem "Bricolage Grotesque",sans-serif}
+.pos{color:var(--pos)}.neg{color:var(--neg)}
+ul.oc{list-style:none;margin:10px 0 0;padding:0;font-size:.9rem}
+ul.oc li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px dashed var(--bd)}
+ul.oc b{white-space:nowrap}
+.verdict{margin-top:12px;padding:10px 12px;background:var(--acs);border-radius:8px}
+.scroll{overflow-x:auto}
+svg text{font:12px "IBM Plex Sans",system-ui,sans-serif;fill:var(--tx)}
+svg .m{fill:var(--mut);font-size:11px}
+.h{display:flex;justify-content:space-between;gap:8px;align-items:center;border-top:1px solid var(--bd);padding:10px 0;flex-wrap:wrap}
+.h:first-of-type{border-top:0}
+.tag{font-size:.8rem;color:var(--mut)}
+</style>
+</head>
+<body>
+<main>
+<h1>WhatIf</h1>
+<p class="sub">Type a decision. WhatIf works out the options, what could happen with each, how likely it is, and which choice holds up best.</p>
+
+<section class="card" aria-label="Your decision">
+<label for="ttl">Your decision</label>
+<input type="text" id="ttl" placeholder="e.g. Should I buy a laptop now or save for another three months?" autocomplete="off">
+<div class="row">
+<button class="pri" id="go" type="button">Simulate</button>
+<button id="ex" type="button">Try the laptop example</button>
+</div>
+<div class="status" id="st" role="status"></div>
+</section>
+
+<section class="card" id="rcard" hidden aria-label="Results">
+<div class="tabs" role="tablist">
+<button role="tab" id="t1" aria-selected="true" type="button">Compare outcomes</button>
+<button role="tab" id="t2" aria-selected="false" type="button">Decision tree</button>
+</div>
+<div id="cmp"></div>
+<div id="tree" class="scroll" hidden></div>
+</section>
+
+<section class="card" aria-label="Saved decisions">
+<h2>Previous decisions</h2>
+<div id="hist"></div>
+</section>
+</main>
+<script>
+window.onerror=(m)=>{let b=document.getElementById('err');if(!b){b=document.createElement('div');b.id='err';b.style.cssText='background:#d0415a;color:#fff;padding:8px 12px;position:sticky;top:0;z-index:9';document.body.prepend(b)}b.textContent='Something broke: '+m};
+const KEY='whatif:v2';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let H=[],S=null;
+try{H=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){H=[]}
+const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(H))}catch(e){}};
+const sg=n=>n>0?'+':n<0?'−':'';
+const fmt=n=>sg(Math.round(n*10)/10)+Math.abs(n).toFixed(1);
+const cls=n=>n>0?'pos':n<0?'neg':'';
+function an(o){const tot=o.outcomes.reduce((a,x)=>a+x.p,0)||1;
+ const ev=o.outcomes.reduce((a,x)=>a+(x.p/tot)*x.i,0);
+ const pos=o.outcomes.filter(x=>x.i>0).reduce((a,x)=>a+x.p/tot,0)*100;
+ const is=o.outcomes.map(x=>x.i);
+ return{tot,ev,pos,best:Math.max(...is,0),worst:Math.min(...is,0)}}
+function clean(r){
+ if(!r||!Array.isArray(r.options))return null;
+ const opts=r.options.slice(0,4).map(o=>({name:String(o.name||'').slice(0,30),outcomes:(Array.isArray(o.outcomes)?o.outcomes:[]).slice(0,5).map(c=>({t:String(c.t||'').slice(0,90),p:Math.max(1,Math.min(100,Math.round(+c.p)||0)),i:Math.max(-10,Math.min(10,Math.round(+c.i)||0))})).filter(c=>c.t)})).filter(o=>o.name&&o.outcomes.length>=2);
+ return opts.length>=2?opts:null}
+function local(q){
+ let t=q.replace(/[?.!]+$/,'').replace(/^(should i|do i|can i|shall i|is it better to)\s+/i,'');
+ let parts=t.split(/\s+(?:or|vs\.?|versus)\s+/i).map(s=>s.trim()).filter(Boolean);
+ if(parts.length<2)parts=['Go ahead: '+t,'Hold off or skip it'];
+ const nm=s=>s.length>28?s.slice(0,27)+'…':s;
+ const T=[[{t:'It works out close to what you hoped',p:55,i:6},{t:'It costs more time or money than expected',p:30,i:-4},{t:'You wish you had compared more options',p:15,i:-6}],
+ [{t:'You stay safe and keep your options open',p:50,i:4},{t:'You miss a good window of opportunity',p:30,i:-5},{t:'Things shift and the delay pays off',p:20,i:6}],
+ [{t:'A steady, acceptable result',p:50,i:3},{t:'An unexpected problem appears',p:30,i:-4},{t:'A pleasant surprise shows up',p:20,i:5}]];
+ return parts.slice(0,3).map((p,k)=>({name:nm(p),outcomes:T[k%3].map(x=>({...x}))}))}
+function verdict(R,bi){
+ const s=[...R.keys()].sort((a,b)=>R[b].ev-R[a].ev),gap=R[s[0]].ev-R[s[1]].ev,n=S.options[bi].name;
+ const risk=R.reduce((m,r,i)=>r.worst<R[m].worst?i:m,0);
+ let t=gap<0.5?'These options are nearly tied on expected impact, so your risk tolerance and gut feel should break the tie.':`“${esc(n)}” leads by ${gap.toFixed(1)} points on expected impact.`;
+ if(risk!==bi&&gap>=0.5)t+=` Note that “${esc(S.options[risk].name)}” has the worst downside (${fmt(R[risk].worst)}).`;
+ else if(R[bi].worst<=-6)t+=` Be aware its worst case is still harsh (${fmt(R[bi].worst)}).`;
+ return t}
+function draw(){
+ if(!S){$('#rcard').hidden=true;return}
+ $('#rcard').hidden=false;
+ const R=S.options.map(an),bi=R.reduce((m,r,i)=>r.ev>R[m].ev?i:m,0);
+ $('#cmp').innerHTML=`<div class="cmp">${S.options.map((o,i)=>{const r=R[i];
+ return`<div class="res ${i===bi?'win':''}"><h3>${esc(o.name)}${i===bi?'<span class="badge">Best expected</span>':''}</h3>
+ <div class="ev ${cls(r.ev)}">${fmt(r.ev)}</div><div class="tag">expected impact score (−10 to +10)</div>
+ <div class="bar"><i style="${r.ev>=0?'left:50%':'right:50%'};width:${Math.abs(r.ev)*5}%;background:var(${r.ev>=0?'--pos':'--neg'})"></i></div>
+ <div class="stats"><span>Worst ${fmt(r.worst)}</span><span>${r.pos.toFixed(0)}% chance of a good result</span><span>Best ${fmt(r.best)}</span></div>
+ <ul class="oc">${o.outcomes.map(c=>`<li><span>${esc(c.t)}</span><b class="${cls(c.i)}">${Math.round(c.p/r.tot*100)}% · ${sg(c.i)}${Math.abs(c.i)}</b></li>`).join('')}</ul></div>`}).join('')}</div>
+ <div class="verdict">${verdict(R,bi)}</div>`;
+ tree(R)}
+function tree(R){
+ const rowH=40,n=S.options.reduce((a,o)=>a+o.outcomes.length,0),Ht=Math.max(n*rowH+20,100),X1=130,X2=330,X3=520;let k=0;
+ const oy=S.options.map(o=>o.outcomes.map(()=>20+(k++)*rowH+rowH/2-10));
+ const oY=oy.map(ys=>ys.reduce((a,b)=>a+b)/ys.length),rY=oY.reduce((a,b)=>a+b)/oY.length;
+ const cv=(x1,y1,x2,y2,c,w)=>`<path d="M${x1} ${y1}C${(x1+x2)/2} ${y1},${(x1+x2)/2} ${y2},${x2} ${y2}" fill="none" stroke="${c}" stroke-width="${w}" opacity=".8"/>`;
+ const cut=(s,m)=>s.length>m?s.slice(0,m-1)+'…':s;
+ let g=`<rect x="10" y="${rY-16}" width="${X1-30}" height="32" rx="8" fill="var(--ac)"/><text x="${10+(X1-30)/2}" y="${rY+4}" text-anchor="middle" style="fill:var(--onac);font-weight:600">Decision</text>`;
+ S.options.forEach((o,a)=>{const r=R[a];
+  g+=cv(X1-20,rY,X2,oY[a],'var(--ac)',2.5);
+  g+=`<rect x="${X2}" y="${oY[a]-16}" width="150" height="32" rx="8" fill="var(--acs)" stroke="var(--ac)"/><text x="${X2+75}" y="${oY[a]-1}" text-anchor="middle" style="font-weight:600">${esc(cut(o.name,18))}</text><text class="m" x="${X2+75}" y="${oY[a]+11}" text-anchor="middle">expected ${fmt(r.ev)}</text>`;
+  o.outcomes.forEach((c,b)=>{const y=oy[a][b],col=c.i>0?'var(--pos)':c.i<0?'var(--neg)':'var(--neu)',p=Math.round(c.p/r.tot*100);
+   g+=cv(X2+150,oY[a],X3,y,col,1+p/12);
+   g+=`<circle cx="${X3}" cy="${y}" r="5" fill="${col}"/><text x="${X3+12}" y="${y-2}">${esc(cut(c.t,46))}</text><text class="m" x="${X3+12}" y="${y+12}">${p}% chance · impact ${sg(c.i)}${Math.abs(c.i)}</text>`})});
+ $('#tree').innerHTML=`<svg width="880" height="${Ht}" viewBox="0 0 880 ${Ht}" role="img" aria-label="Decision tree of options and their possible outcomes">${g}</svg>`}
+function hist(){
+ $('#hist').innerHTML=H.length?H.map(h=>{const R=h.options.map(an),bi=R.reduce((m,r,i)=>r.ev>R[m].ev?i:m,0);
+ return`<div class="h"><div><strong>${esc(h.title)}</strong><div class="tag">${new Date(h.date).toLocaleDateString()} · best expected: ${esc(h.options[bi].name)} (${fmt(R[bi].ev)})</div></div><div class="row" style="margin:0"><button type="button" data-load="${h.id}">View result</button><button type="button" data-del="${h.id}">Delete</button></div></div>`}).join(''):'<p class="tag" style="margin:0">Nothing yet. Simulate a decision and it is saved here automatically.</p>'}
+const say=t=>{$('#st').textContent=t};
+async function simulate(){
+ const q=$('#ttl').value.trim();
+ if(!q){say('Type a decision first.');return}
+ const b=$('#go');b.disabled=true;say('Simulating possible outcomes…');
+ let opts=null,used=false;
+ try{
+  const r=await fetch('/api/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({q})});
+  if(r.ok){opts=clean(await r.json());used=!!opts}
+ }catch(e){opts=null}
+ if(!opts)opts=local(q);
+ S={id:'d'+Date.now().toString(36),title:q,date:Date.now(),options:opts};
+ H.unshift(JSON.parse(JSON.stringify(S)));H=H.slice(0,30);persist();
+ draw();hist();say(used?'':'Showing a quick offline estimate because the AI request failed.');
+ b.disabled=false;$('#rcard').scrollIntoView({behavior:'smooth',block:'start'})}
+$('#go').onclick=simulate;
+$('#ttl').addEventListener('keydown',e=>{if(e.key==='Enter')simulate()});
+$('#ex').onclick=()=>{$('#ttl').value='Should I buy a laptop now or save for another three months?';simulate()};
+$('#t1').onclick=$('#t2').onclick=e=>{const one=e.target.id==='t1';$('#t1').setAttribute('aria-selected',one);$('#t2').setAttribute('aria-selected',!one);$('#cmp').hidden=!one;$('#tree').hidden=one};
+$('#hist').addEventListener('click',e=>{const d=e.target.dataset;
+ if(d.load){const h=H.find(x=>x.id===d.load);if(h){S=JSON.parse(JSON.stringify(h));$('#ttl').value=S.title;draw();$('#rcard').scrollIntoView({behavior:'smooth'})}}
+ else if(d.del){H=H.filter(x=>x.id!==d.del);persist();hist()}});
+hist();
+</script>
+</body>
+</html>
