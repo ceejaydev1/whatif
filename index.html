@@ -6,10 +6,10 @@
 <title>WhatIf – Decision Consequence Simulator</title>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f4f5f8;--card:#fff;--tx:#1b2233;--mut:#667089;--bd:#dde1ea;--ac:#4a4fd6;--acs:#e9eafb;--pos:#16896a;--neg:#d0415a;--neu:#8a93a8;--onac:#fff;
+:root{--bg:#f4f5f8;--card:#fff;--tx:#1b2233;--mut:#667089;--bd:#dde1ea;--ac:#4a4fd6;--acs:#e9eafb;--pos:#16896a;--neg:#d0415a;--neu:#8a93a8;--onac:#fff;--warn:#9a6200;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151f;--card:#1b2030;--tx:#e8ebf4;--mut:#9aa3ba;--bd:#2c3348;--ac:#8c90ff;--acs:#262a4a;--pos:#3ed1a3;--neg:#ff7a90;--neu:#7c86a0;--onac:#12151f;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#12151f;--card:#1b2030;--tx:#e8ebf4;--mut:#9aa3ba;--bd:#2c3348;--ac:#8c90ff;--acs:#262a4a;--pos:#3ed1a3;--neg:#ff7a90;--neu:#7c86a0;--onac:#12151f;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151f;--card:#1b2030;--tx:#e8ebf4;--mut:#9aa3ba;--bd:#2c3348;--ac:#8c90ff;--acs:#262a4a;--pos:#3ed1a3;--neg:#ff7a90;--neu:#7c86a0;--onac:#12151f;--warn:#ffcc66;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12151f;--card:#1b2030;--tx:#e8ebf4;--mut:#9aa3ba;--bd:#2c3348;--ac:#8c90ff;--acs:#262a4a;--pos:#3ed1a3;--neg:#ff7a90;--neu:#7c86a0;--onac:#12151f;--warn:#ffcc66;color-scheme:dark}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
@@ -60,6 +60,20 @@ textarea:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
 .hh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
 .hh h2{margin:0}
 .foot{font-size:.8rem;color:var(--mut);max-width:70ch;margin:0 0 8px}
+.msg{margin-top:12px;padding:10px 12px;border-radius:8px;border-left:4px solid var(--neu);background:var(--bg);font-size:.92rem}
+.msg.ok{border-color:var(--pos)}.msg.err{border-color:var(--neg)}.msg.warn{border-color:var(--warn)}.msg.info{border-color:var(--ac)}
+.msg strong{margin-right:6px}
+.msg details{margin-top:6px;font-size:.8rem;color:var(--mut)}
+.msg code{display:block;white-space:pre-wrap;word-break:break-word}
+.qbox{margin-top:12px;border:1px solid var(--bd);border-radius:10px;padding:12px;background:var(--bg)}
+.qbox fieldset{border:0;margin:0 0 10px;padding:0}
+.qbox legend{font-weight:500;margin-bottom:6px;padding:0}
+.picks{display:flex;gap:6px;flex-wrap:wrap}
+.pick{border-radius:99px;padding:5px 12px;font-size:.88rem}
+.pick[aria-pressed=true]{background:var(--acs);border-color:var(--ac)}
+.flip{margin-top:10px;padding:10px 12px;border:1px solid var(--bd);border-radius:8px}
+.flip p{margin:4px 0 0;font-size:.9rem}
+.chk{display:flex;gap:8px;align-items:center;font-size:.9rem;color:var(--tx);margin-top:10px}
 </style>
 </head>
 <body>
@@ -78,7 +92,9 @@ textarea:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
 <button class="chip" type="button" data-ex="Should I take a part-time job now or focus on my capstone until April?">Job or capstone</button>
 <button class="chip" type="button" data-ex="Should I rent a boarding house near school or commute from home every day?">Boarding or commute</button>
 </div>
-<div class="status" id="st" role="status"></div>
+<label class="chk"><input type="checkbox" id="fq" checked> Ask me 2 quick follow-up questions first (better accuracy)</label>
+<div id="qbox" class="qbox" hidden></div>
+<div id="st" class="msg" role="status" aria-live="polite" hidden></div>
 </section>
 
 <section class="card" id="rcard" hidden aria-label="Results">
@@ -143,7 +159,7 @@ function draw(){
  <div class="bar"><i style="${r.ev>=0?'left:50%':'right:50%'};width:${Math.abs(r.ev)*5}%;background:var(${r.ev>=0?'--pos':'--neg'})"></i></div>
  <div class="stats"><span>Worst ${fmt(r.worst)}</span><span>${r.pos.toFixed(0)}% chance of a good result</span><span>Best ${fmt(r.best)}</span></div>
  <ul class="oc">${o.outcomes.map(c=>`<li><span>${esc(c.t)}</span><b class="${cls(c.i)}">${Math.round(c.p/r.tot*100)}% · ${sg(c.i)}${Math.abs(c.i)}</b></li>`).join('')}</ul></div>`}).join('')}</div>
- <div class="verdict">${verdict(R,bi)}</div>${S.note?`<p class="tag" style="margin:10px 0 0">Assumptions: ${esc(S.note.replace(/[.\s]+$/,''))}. These are estimates, not predictions.</p>`:''}`;
+ <div class="verdict">${verdict(R,bi)}</div>${flipHtml(R,bi)}${S.note?`<p class="tag" style="margin:10px 0 0">Assumptions: ${esc(S.note.replace(/[.\s]+$/,''))}. These are estimates, not predictions.</p>`:''}`;
  tree(R)}
 function tree(R){
  const rowH=40,n=S.options.reduce((a,o)=>a+o.outcomes.length,0),Ht=Math.max(n*rowH+20,100),X1=130,X2=330,X3=520;let k=0;
@@ -162,34 +178,76 @@ function tree(R){
 function hist(){
  $('#hist').innerHTML=H.length?H.map(h=>{const R=h.options.map(an),bi=R.reduce((m,r,i)=>r.ev>R[m].ev?i:m,0);
  return`<div class="h"><div><strong>${esc(h.title)}</strong><div class="tag">${new Date(h.date).toLocaleDateString()} · best expected: ${esc(h.options[bi].name)} (${fmt(R[bi].ev)})</div></div><div class="row" style="margin:0"><button type="button" data-load="${h.id}">View result</button><button type="button" data-del="${h.id}">Delete</button></div></div>`}).join(''):'<p class="tag" style="margin:0">Nothing yet. Simulate a decision and it is saved here automatically.</p>'}
-const say=t=>{$('#st').textContent=t};
+function say(type,text,detail){const e=$('#st');
+ if(!type){e.hidden=true;e.innerHTML='';return}
+ e.hidden=false;e.className='msg '+type;e.setAttribute('role',type==='err'||type==='warn'?'alert':'status');
+ e.innerHTML='<strong>'+({ok:'Success.',warn:'Heads up.',err:'Error.',info:'Working.'}[type])+'</strong>'+esc(text)+(detail?'<details><summary>Technical detail</summary><code>'+esc(detail)+'</code></details>':'')}
+function friendly(m){m=String(m||'');
+ if(m==='NETWORK'||/HTTP 404/.test(m))return 'Could not reach the server. Open the deployed website (not a saved file) and check your connection.';
+ if(/402|insufficient|balance/i.test(m))return 'The AI account has no credit or its limit is used up.';
+ if(/401|invalid api key|authentication/i.test(m))return 'The AI key was rejected. Check AI_API_KEY in Vercel.';
+ if(/model_not_found|provider 404/i.test(m))return 'The AI model name is not available. Check AI_MODEL in Vercel.';
+ if(/429|too many/i.test(m))return 'Too many requests right now. Wait a minute and try again.';
+ if(/Missing AI_API_KEY/i.test(m))return 'The server has no AI key set. Add AI_API_KEY in Vercel and redeploy.';
+ if(/wrong format|valid answer/i.test(m))return 'The AI replied in an unexpected format. Try again.';
+ return 'The AI request failed.'}
+const report=(used,e)=>used?say('ok','Simulation complete. This is an AI estimate: use it to think things through, not to decide for you.'):say('warn','Showing a generic offline estimate instead. '+friendly(e),e);
+function flipHtml(R,bi){
+ const ord=[...R.keys()].sort((a,b)=>R[b].ev-R[a].ev),L=ord[0],Q=ord[1],gap=R[L].ev-R[Q].ev;let lvl,msg;
+ if(gap<0.5){lvl='Too close to call';msg='The options are within half a point, so small changes in your assumptions could flip the result. Weigh the risks and your own priorities.'}
+ else{
+  const mk=i=>{const o=S.options[i],t=R[i].tot,x=o.outcomes.map(c=>({t:c.t,p:c.p/t,i:c.i}));return{name:o.name,best:x.reduce((a,c)=>c.i>a.i?c:a),worst:x.reduce((a,c)=>c.i<a.i?c:a)}};
+  const a=mk(L),b=mk(Q),c=[],pt=x=>Math.ceil(x*100);
+  const x1=gap/(a.best.i-a.worst.i);if(a.best.i>a.worst.i&&x1<=a.best.p)c.push({x:x1,txt:`If “${a.best.t}” were ${pt(x1)} points less likely (that chance moving to “${a.worst.t}”), “${b.name}” would take the lead.`});
+  const x2=gap/(b.best.i-b.worst.i);if(b.best.i>b.worst.i&&x2<=b.worst.p)c.push({x:x2,txt:`If “${b.worst.t}” were ${pt(x2)} points less likely (that chance moving to “${b.best.t}”), “${b.name}” would take the lead.`});
+  if(!c.length){lvl='Robust';msg=`No single shift in one outcome’s chance would let “${S.options[Q].name}” overtake “${S.options[L].name}”.`}
+  else{c.sort((u,v)=>u.x-v.x);const m=c[0].x;lvl=m<=.1?'Fragile':m<=.25?'Moderate':'Robust';msg=c[0].txt+(lvl==='Fragile'?' A small change in your assumptions could reverse this result.':lvl==='Robust'?' That is a large change, so the result holds up well.':'')}}
+ return`<div class="flip"><strong>How solid is this result? ${lvl}</strong><p>${esc(msg)}</p></div>`}
+async function askQs(q){
+ const b=$('#go');b.disabled=true;say('info','Preparing 2 quick questions to improve accuracy…');
+ let qs=[];
+ try{const r=await fetch('/api/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({q,mode:'questions'})});
+  if(r.ok)qs=((await r.json()).questions)||[]}catch(e){}
+ b.disabled=false;
+ if(!qs.length){say('info','Skipped the follow-up questions and simulating directly.');return run(q,q)}
+ say('info','Tap an answer for any question you can answer, then press Run simulation. Skipping is fine.');
+ const box=$('#qbox');box.hidden=false;box.dataset.q=q;box._qs=qs;
+ box.innerHTML=qs.map(x=>`<fieldset><legend>${esc(x.q)}</legend><div class="picks">${x.choices.map(c=>`<button type="button" class="pick" aria-pressed="false">${esc(c)}</button>`).join('')}</div></fieldset>`).join('')+'<div class="row"><button class="pri" id="runq" type="button">Run simulation</button><button id="skq" type="button">Skip questions</button></div>'}
 async function simulate(){
  const q=$('#ttl').value.trim();
- if(!q){say('Type a decision first.');return}
- const b=$('#go');b.disabled=true;say('Simulating possible outcomes…');
+ if(!q){say('err','Type your decision first, then tap Simulate.');return}
+ $('#qbox').hidden=true;
+ if($('#fq').checked)return askQs(q);
+ return run(q,q)}
+async function run(q,extra){
+ const b=$('#go');b.disabled=true;say('info','Simulating possible outcomes…');
  let opts=null,used=false,note='',errmsg='';
  try{
-  const r=await fetch('/api/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({q})});
-  if(r.ok){const jd=await r.json();opts=clean(jd);used=!!opts;note=String(jd.note||'').slice(0,200)}else{try{errmsg=(await r.json()).error||('HTTP '+r.status)}catch(e){errmsg='HTTP '+r.status}}
- }catch(e){opts=null}
+  const r=await fetch('/api/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({q:extra})});
+  if(r.ok){const jd=await r.json();opts=clean(jd);used=!!opts;if(!opts)errmsg='wrong format';note=String(jd.note||'').slice(0,200)}else{try{errmsg=(await r.json()).error||('HTTP '+r.status)}catch(e){errmsg='HTTP '+r.status}}
+ }catch(e){opts=null;errmsg='NETWORK'}
  if(!opts)opts=local(q);
  S={id:'d'+Date.now().toString(36),title:q,date:Date.now(),options:opts,note:used?note:'',ai:used};
  H.unshift(JSON.parse(JSON.stringify(S)));H=H.slice(0,30);persist();
- draw();hist();say(used?'':'Offline estimate shown. '+(errmsg||'The AI returned no valid answer.'));
+ draw();hist();report(used,errmsg);
  b.disabled=false;$('#rcard').scrollIntoView({behavior:'smooth',block:'start'})}
 $('#go').onclick=simulate;
 $('#ttl').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();simulate()}});
 const ctr=()=>{$('#ctr').textContent=$('#ttl').value.length+' / 300'};
-$('#ttl').addEventListener('input',ctr);
+$('#ttl').addEventListener('input',()=>{ctr();$('#qbox').hidden=true});
 document.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{$('#ttl').value=b.dataset.ex;ctr();simulate()});
 $('#clr').onclick=()=>{if(H.length&&confirm('Delete all saved decisions?')){H=[];persist();hist()}};
 $('#cp').onclick=async()=>{if(!S)return;const R=S.options.map(an);
  const t=S.title+'\n\n'+S.options.map((o,i)=>o.name+' (expected '+fmt(R[i].ev)+')\n'+o.outcomes.map(c=>'- '+c.t+': '+Math.round(c.p/R[i].tot*100)+'%, impact '+sg(c.i)+Math.abs(c.i)).join('\n')).join('\n\n')+(S.note?'\n\nAssumptions: '+S.note:'');
- try{await navigator.clipboard.writeText(t);say('Summary copied.')}catch(e){say('Could not copy in this browser.')}};
+ try{await navigator.clipboard.writeText(t);say('ok','Summary copied to your clipboard.')}catch(e){say('err','Could not copy in this browser. Select the text and copy it manually.')}};
 $('#t1').onclick=$('#t2').onclick=e=>{const one=e.target.id==='t1';$('#t1').setAttribute('aria-selected',one);$('#t2').setAttribute('aria-selected',!one);$('#cmp').hidden=!one;$('#tree').hidden=one};
 $('#hist').addEventListener('click',e=>{const d=e.target.dataset;
  if(d.load){const h=H.find(x=>x.id===d.load);if(h){S=JSON.parse(JSON.stringify(h));$('#ttl').value=S.title;ctr();draw();$('#rcard').scrollIntoView({behavior:'smooth'})}}
  else if(d.del){H=H.filter(x=>x.id!==d.del);persist();hist()}});
+$('#qbox').addEventListener('click',e=>{const t=e.target,box=$('#qbox');
+ if(t.classList.contains('pick')){const on=t.getAttribute('aria-pressed')==='true';t.closest('fieldset').querySelectorAll('.pick').forEach(b=>b.setAttribute('aria-pressed','false'));t.setAttribute('aria-pressed',on?'false':'true')}
+ else if(t.id==='runq'){const q=box.dataset.q,ans=[];box.querySelectorAll('fieldset').forEach((f,i)=>{const k=f.querySelector('[aria-pressed=true]');if(k)ans.push(box._qs[i].q+' '+k.textContent)});box.hidden=true;run(q,ans.length?q+' | Details: '+ans.join('; '):q)}
+ else if(t.id==='skq'){box.hidden=true;run(box.dataset.q,box.dataset.q)}});
 hist();
 </script>
 </body>
