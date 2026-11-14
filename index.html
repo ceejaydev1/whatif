@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>WhatIf · Decision consequence simulator</title>
 <script>try{var t=localStorage.getItem('whatif:theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -60,8 +60,8 @@ legend{font-weight:600;margin-bottom:8px;padding:0}
 .tabs .link{margin-left:auto;padding-bottom:12px}
 .q{font-size:clamp(1.3rem,3vw,1.75rem);line-height:1.3;margin:8px 0 6px;max-width:34ch}
 .src{font-size:.82rem;color:var(--mut);margin:0 0 24px}
-.brief{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:0;border:1px solid var(--rule);background:var(--sf);margin-bottom:24px}
-.brief>div{padding:18px 20px}.brief>div+div{border-left:1px solid var(--rule)}
+.brief{display:grid;grid-template-columns:1fr;gap:1px;border:1px solid var(--rule);background:var(--rule);margin-bottom:24px}
+.brief>div{background:var(--sf);padding:18px 20px}
 .brief p{margin:8px 0 0}
 .brief>div:first-child{background:var(--acs)}
 .mark::after{content:"";display:inline-block;width:.34em;height:.34em;border-radius:50%;background:var(--ac);margin-left:.16em}
@@ -91,7 +91,7 @@ ul.rows{list-style:none;margin:0;padding:0}
 .cols span:nth-child(n+3){text-align:right}
 .note{font-size:.84rem;color:var(--mut);margin:22px 0 0;max-width:70ch}
 .scroll{overflow-x:auto;border:1px solid var(--rule);background:var(--sf);padding:12px}
-svg{display:block;min-width:760px;width:100%;height:auto}
+.scroll svg{display:block;min-width:760px;width:100%;height:auto}
 svg text{font:12.5px var(--sans);fill:var(--ink)}svg .m{font:11px var(--mono);fill:var(--mut)}
 .hist{list-style:none;margin:0;padding:0}
 .hist li{display:grid;grid-template-columns:96px 1fr auto;gap:16px;align-items:baseline;padding:12px 0;border-top:1px solid var(--rule)}
@@ -101,7 +101,7 @@ svg text{font:12.5px var(--sans);fill:var(--ink)}svg .m{font:11px var(--mono);fi
 .empty{color:var(--mut);margin:0}
 .hh{display:flex;justify-content:space-between;align-items:baseline}.hh .sh{margin-bottom:8px}
 footer{border-top:1px solid var(--rule);padding:22px 0 56px;font-size:.82rem;color:var(--mut)}
-@media(max-width:620px){.brief>div+div{border-left:0;border-top:1px solid var(--rule)}.hist li{grid-template-columns:1fr auto}.hist .d{grid-column:1/-1}.rows li,.cols{grid-template-columns:1fr 44px 36px}.pb,.cols span:nth-child(2){display:none}.btn,.btn2{width:100%}.intro{padding-top:32px}}
+@media(max-width:620px){.hist li{grid-template-columns:1fr auto}.hist .d{grid-column:1/-1}.rows li,.cols{grid-template-columns:1fr 44px 36px}.pb,.cols span:nth-child(2){display:none}.btn,.btn2{width:100%}.intro{padding-top:32px}}
 .ctl{display:grid;gap:20px;padding:18px 20px;border:1px solid var(--rule);background:var(--sf);margin-bottom:24px}
 .pr{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px 32px}
 .prow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
@@ -133,9 +133,51 @@ footer{border-top:1px solid var(--rule);padding:22px 0 56px;font-size:.82rem;col
 .rt{display:flex;align-items:center;gap:16px}
 .tg{background:none;border:1px solid var(--rule);border-radius:3px;width:34px;height:34px;display:grid;place-items:center;color:var(--ink);padding:0}
 .tg:hover{border-color:var(--ink)}
-.tg svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tg svg{display:block;min-width:0;width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .tg[data-mode=dark] .moon,.tg[data-mode=light] .sun{display:none}
 @media(max-width:520px){.tagline{display:none}}
+/* Responsive layer */
+html,body{overflow-x:hidden;overflow-x:clip}
+.hist li.empty{display:block;padding:12px 0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{overflow-wrap:break-word}
+.wrap{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right))}
+.bar{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right))}
+.q,.oh h3,.hist .t{overflow-wrap:anywhere}
+.tabs{flex-wrap:wrap;column-gap:24px}
+@media(min-width:760px){.brief{grid-template-columns:repeat(var(--n,3),1fr)}}
+@media(min-width:1200px){.wrap{max-width:1120px}body{font-size:16px}}
+@media(min-width:1600px){.wrap{max-width:1240px}}
+@media(max-width:899px){.opts{grid-template-columns:1fr 1fr}}
+@media(max-width:720px){.opts{grid-template-columns:1fr}}
+@media(max-width:620px){
+ .step{padding:22px 0}.opt{padding:16px}.ctl{padding:14px}.brief>div{padding:14px 16px}
+ .stats dd{font-size:.92rem}.num{font-size:2.1rem}
+ .rows li,.cols{grid-template-columns:1fr 40px 44px}
+ .tabs{column-gap:18px}.tabs .link{margin-left:0;width:100%;text-align:left;padding-bottom:10px}
+ .seg button{padding:6px 10px}.row{gap:10px}
+}
+@media(max-width:360px){
+ .wrap,.bar{padding-left:14px;padding-right:14px}
+ .stats{grid-template-columns:1fr 1fr}.stats>div:last-child{grid-column:1/-1}
+ .sh{font-size:1.2rem}.hist li{gap:8px}
+}
+@media(pointer:coarse){
+ button,.pick,.seg button{min-height:44px}
+ .tg{width:44px;height:44px}
+ .link{min-height:44px;display:inline-flex;align-items:center}
+ .chk{min-height:44px}.chk input{width:20px;height:20px}
+}
+.ot,.ot ul{list-style:none;margin:0;padding:0}
+.ot ul{margin-left:10px;padding-left:18px;border-left:1px solid var(--rule)}
+.ot li{padding:6px 0}
+.rt0{display:inline-block;background:var(--ac);color:var(--onac);padding:4px 12px;border-radius:2px;font-weight:600;font-size:.88rem}
+.on{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;border:1px solid var(--ac);padding:8px 12px;border-radius:2px;background:var(--sf)}
+.on .mono{font-size:.78rem;color:var(--mut)}
+.oc{display:flex;justify-content:space-between;gap:12px;font-size:.88rem;position:relative}
+.oc::before{content:"";position:absolute;left:-23px;top:.85em;width:9px;height:9px;border-radius:50%;background:var(--mut)}
+.oc.g::before{background:var(--pos)}.oc.b::before{background:var(--neg)}
+.oc .mono{white-space:nowrap;font-size:.8rem}
 </style>
 </head>
 <body>
@@ -165,7 +207,7 @@ footer{border-top:1px solid var(--rule);padding:22px 0 56px;font-size:.82rem;col
 <section class="step" id="qbox" aria-labelledby="s2" hidden></section>
 
 <section class="step" id="rcard" aria-labelledby="s3" hidden>
-<h2 class="sh" id="s3"><span>03</span>Analysis</h2>
+<h2 class="sh" id="s3"><span>02</span>Analysis</h2>
 <div id="ctl"></div>
 <div class="tabs" role="tablist">
 <button role="tab" id="t1" aria-selected="true" type="button">Comparison</button>
@@ -177,7 +219,7 @@ footer{border-top:1px solid var(--rule);padding:22px 0 56px;font-size:.82rem;col
 </section>
 
 <section class="step" aria-labelledby="s4">
-<div class="hh"><h2 class="sh" id="s4"><span>04</span>Previous decisions</h2><button class="link" id="clr" type="button">Clear all</button></div>
+<div class="hh"><h2 class="sh" id="s4">Previous decisions</h2><button class="link" id="clr" type="button">Clear all</button></div>
 <ul class="hist" id="hist"></ul>
 </section>
 </main>
@@ -259,7 +301,7 @@ function draw(){
  const dt=new Date(S.date).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
  $('#cmp').innerHTML=`<p class="eyebrow">${esc(dt)}</p><h3 class="q">${esc(S.title)}</h3>
  <p class="src">${S.ai===false?'Offline template. Not tailored to your decision.':'Estimated by AI from your description.'}</p>
- <div class="brief"><div><span class="eyebrow">Recommendation</span><p>${esc(verdict(R,bi))}</p></div>
+ <div class="brief" style="--n:${hasX()?3:2}"><div><span class="eyebrow">Recommendation</span><p>${esc(verdict(R,bi))}</p></div>
  <div><span class="eyebrow">Robustness</span><p><span class="lvl lvl-${f.lvl.split(' ')[0]}">${esc(f.lvl)}.</span> ${esc(f.msg)}</p></div>${hasX()?`<div><span class="eyebrow">Over time</span><p>${esc(overTime())}</p></div>`:''}</div>
  <div class="opts">${cur.map((o,i)=>{const r=R[i];
  return`<article class="opt ${i===bi?'win':''}"><div class="oh"><h3>${esc(o.name)}</h3>${i===bi?'<span class="rec">Recommended</span>':''}</div>
@@ -272,7 +314,9 @@ function draw(){
  <ul class="rows">${o.outcomes.map(c=>{const p=Math.round(c.p/r.tot*100);return`<li><span>${esc(c.t)}</span><span class="pb"><i style="width:${p}%"></i></span><span class="pc">${p}%</span><span class="im ${cls(c.i)}">${ims(c.i)}</span></li>`}).join('')}</ul></article>`}).join('')}</div>
  ${S.note?`<p class="note"><strong>Assumptions.</strong> ${esc(S.note.replace(/[.\s]+$/,''))}.</p>`:''}${hasX()?`<p class="note">Each outcome is rated from −10 to +10 at 1 month, 1 year and 5 years. Your priorities shift an outcome’s score by how much it affects the areas you rate higher. The figures are estimates, not measurements.</p>`:''}`;
  tree(R)}
-function tree(R){
+function treeList(R){
+ $('#tree').innerHTML=`<ul class="ot"><li><span class="rt0">Decision</span><ul>${cur.map((o,a)=>`<li><div class="on"><b>${esc(o.name)}</b><span class="mono">expected ${fmt(R[a].ev)}</span></div><ul>${o.outcomes.map(c=>{const p=Math.round(c.p/R[a].tot*100);return`<li class="oc ${c.i>0?'g':c.i<0?'b':''}"><span>${esc(c.t)}</span><span class="mono">${p}% · ${ims(c.i)}</span></li>`}).join('')}</ul></li>`).join('')}</ul></li></ul>`}
+function tree(R){if(innerWidth<700)return treeList(R);
  const rowH=42,n=cur.reduce((a,o)=>a+o.outcomes.length,0),Ht=Math.max(n*rowH+24,110),X1=120,X2=330,X3=540;let k=0;
  const oy=cur.map(o=>o.outcomes.map(()=>24+(k++)*rowH+rowH/2-12));
  const oY=oy.map(y=>y.reduce((a,b)=>a+b)/y.length),rY=oY.reduce((a,b)=>a+b)/oY.length;
@@ -319,7 +363,7 @@ async function askQs(q){
  if(!qs.length){say('info','No follow-up questions were needed. Running the simulation.');return run(q,q)}
  say('info','Tap an answer for any question you can answer, then continue. Skipping is fine.');
  const box=$('#qbox');box.hidden=false;box.dataset.q=q;box._qs=qs;
- box.innerHTML=`<h2 class="sh" id="s2"><span>02</span>A few quick questions</h2>`+qs.map(x=>`<fieldset><legend>${esc(x.q)}</legend><div class="picks">${x.choices.map(c=>`<button type="button" class="pick" aria-pressed="false">${esc(c)}</button>`).join('')}</div></fieldset>`).join('')+'<div class="row"><button class="btn" id="runq" type="button">Continue to analysis</button><button class="btn2" id="skq" type="button">Skip questions</button></div>'}
+ box.innerHTML=`<h2 class="sh" id="s2"><span>01.1</span>A few quick questions</h2>`+qs.map(x=>`<fieldset><legend>${esc(x.q)}</legend><div class="picks">${x.choices.map(c=>`<button type="button" class="pick" aria-pressed="false">${esc(c)}</button>`).join('')}</div></fieldset>`).join('')+'<div class="row"><button class="btn" id="runq" type="button">Continue to analysis</button><button class="btn2" id="skq" type="button">Skip questions</button></div>'}
 async function run(q,extra){
  const b=$('#go');b.disabled=true;say('info','Simulating possible outcomes…');
  let opts=null,used=false,note='',errmsg='';
@@ -355,6 +399,8 @@ $('#ctl').addEventListener('click',e=>{const d=e.target.dataset;let ch=false;
  else if(d.wk!=null){W[+d.wk]=+d.wv;ch=true}
  else if(d.wr){W=[1,1,1,1,1];ch=true}
  if(ch){try{localStorage.setItem('whatif:prio',JSON.stringify(W))}catch(x){}draw()}});
+let tm=innerWidth<700,rto;
+addEventListener('resize',()=>{clearTimeout(rto);rto=setTimeout(()=>{const m=innerWidth<700;if(m!==tm){tm=m;if(S)draw()}},150)});
 const root=document.documentElement,mq=window.matchMedia?matchMedia('(prefers-color-scheme: dark)'):{matches:false};
 const curTheme=()=>root.dataset.theme||(mq.matches?'dark':'light');
 function paintTg(){const m=curTheme(),b=$('#tg');b.dataset.mode=m;b.setAttribute('aria-label','Switch to '+(m==='dark'?'light':'dark')+' mode');b.setAttribute('aria-pressed',String(m==='dark'))}
