@@ -96,6 +96,17 @@ svg text{font:12.5px var(--sans);fill:var(--ink)}svg .m{font:11px var(--mono);fi
 .hh{display:flex;justify-content:space-between;align-items:baseline}.hh .sh{margin-bottom:8px}
 footer{border-top:1px solid var(--rule);padding:22px 0 56px;font-size:.82rem;color:var(--mut)}
 @media(max-width:620px){.brief>div+div{border-left:0;border-top:1px solid var(--rule)}.hist li{grid-template-columns:1fr auto}.hist .d{grid-column:1/-1}.rows li,.cols{grid-template-columns:1fr 44px 36px}.pb,.cols span:nth-child(2){display:none}.btn,.btn2{width:100%}.intro{padding-top:32px}}
+.ctl{display:grid;gap:20px;padding:18px 20px;border:1px solid var(--rule);background:var(--sf);margin-bottom:24px}
+.pr{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px 32px}
+.prow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:3px;overflow:hidden}
+.seg button{background:none;border:0;border-right:1px solid var(--rule);padding:5px 12px;font-size:.82rem}
+.seg button:last-child{border-right:0}
+.seg button:hover{background:var(--wash)}
+.seg button[aria-pressed=true]{background:var(--ac);color:var(--onac)}
+.stats.tl{border-bottom:0;margin-bottom:0;padding-bottom:0}
+.stats+.stats{border-top:0;margin-top:0}
+.stats .cur dt{color:var(--ink);font-weight:600}.stats .cur dd{text-decoration:underline;text-underline-offset:5px}
 </style>
 </head>
 <body>
@@ -125,6 +136,7 @@ footer{border-top:1px solid var(--rule);padding:22px 0 56px;font-size:.82rem;col
 
 <section class="step" id="rcard" aria-labelledby="s3" hidden>
 <h2 class="sh" id="s3"><span>03</span>Analysis</h2>
+<div id="ctl"></div>
 <div class="tabs" role="tablist">
 <button role="tab" id="t1" aria-selected="true" type="button">Comparison</button>
 <button role="tab" id="t2" aria-selected="false" type="button">Decision tree</button>
@@ -145,13 +157,31 @@ window.onerror=m=>{let b=document.getElementById('err');if(!b){b=document.create
 const KEY='whatif:v2',MAXO=5;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let H=[],S=null;
+let H=[],S=null,cur=[];
 try{H=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){H=[]}
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(H))}catch(e){}};
 const sg=n=>n>0?'+':n<0?'−':'';
 const fmt=n=>sg(Math.round(n*10)/10)+Math.abs(n).toFixed(1);
 const cls=n=>n>0?'pos':n<0?'neg':'';
 const ims=n=>sg(n)+Math.abs(n);
+const HZ=['1 month','1 year','5 years'],DIM=['Money','Time','Stress and wellbeing','Career and learning','Relationships'],LV=[['Low',.5],['Normal',1],['High',2]];
+let hz=1,W=[1,1,1,1,1];
+try{const w=JSON.parse(localStorage.getItem('whatif:prio'));if(Array.isArray(w)&&w.length===5)W=w.map(Number)}catch(e){}
+const clamp=v=>Math.max(-10,Math.min(10,v));
+function eff(c,k){const b=c.h?c.h[k]:c.i;if(!c.d)return b;const ws=W.reduce((a,v)=>a+v,0);if(!ws)return b;
+ return clamp(b+c.d.reduce((a,v,j)=>a+v*W[j],0)/ws-c.d.reduce((a,v)=>a+v,0)/5)}
+const V=()=>S.options.map(o=>({name:o.name,outcomes:o.outcomes.map(c=>({...c,i:Math.round(eff(c,hz)*10)/10}))}));
+const hasX=()=>S.options.some(o=>o.outcomes.some(c=>c.h&&c.d));
+function evAt(o,k){const t=o.outcomes.reduce((a,c)=>a+c.p,0)||1;return o.outcomes.reduce((a,c)=>a+c.p/t*eff(c,k),0)}
+const tl=i=>`<dl class="stats tl">${HZ.map((n,k)=>{const v=evAt(S.options[i],k);return`<div class="${k===hz?'cur':''}"><dt>${n}</dt><dd class="${cls(v)}">${fmt(v)}</dd></div>`}).join('')}</dl>`;
+function overTime(){const L=HZ.map((_,k)=>S.options.reduce((m,o,i)=>evAt(o,k)>evAt(S.options[m],k)?i:m,0));
+ if(L.every(x=>x===L[0]))return`“${S.options[L[0]].name}” stays ahead at every horizon, from 1 month to 5 years.`;
+ const b=[];L.forEach((x,k)=>{if(k===0||x!==L[k-1])b.push(`“${S.options[x].name}” leads at ${HZ[k]}`)});
+ return b.join(', then ')+'. The best choice depends on how far ahead you are planning.'}
+function ctl(){const e=$('#ctl');
+ if(!hasX()){e.innerHTML='<p class="note" style="margin:0 0 20px">Time horizon and priorities need an AI estimate in the newer format. This result does not include one, so run the simulation again to use them.</p>';return}
+ e.innerHTML=`<div class="ctl"><div class="prow"><span class="eyebrow">Time horizon</span><div class="seg" role="group" aria-label="Time horizon">${HZ.map((n,k)=>`<button type="button" data-hz="${k}" aria-pressed="${k===hz}">${n}</button>`).join('')}</div></div>
+ <div><div class="prow" style="margin-bottom:12px"><span class="eyebrow">What matters to you</span><button class="link" type="button" data-wr="1">Reset</button></div><div class="pr">${DIM.map((n,j)=>`<div class="prow"><span>${n}</span><div class="seg" role="group" aria-label="${n} priority">${LV.map(([l,v])=>`<button type="button" data-wk="${j}" data-wv="${v}" aria-pressed="${W[j]===v}">${l}</button>`).join('')}</div></div>`).join('')}</div></div></div>`}
 function an(o){const tot=o.outcomes.reduce((a,x)=>a+x.p,0)||1;
  const ev=o.outcomes.reduce((a,x)=>a+(x.p/tot)*x.i,0),pos=o.outcomes.filter(x=>x.i>0).reduce((a,x)=>a+x.p/tot,0)*100,is=o.outcomes.map(x=>x.i);
  return{tot,ev,pos,best:Math.max(...is,0),worst:Math.min(...is,0)}}
@@ -162,7 +192,8 @@ function check(q){
  return null}
 function clean(r){
  if(!r||!Array.isArray(r.options))return null;
- const o=r.options.slice(0,MAXO).map(o=>({name:String(o.name||'').slice(0,30),outcomes:(Array.isArray(o.outcomes)?o.outcomes:[]).slice(0,5).map(c=>({t:String(c.t||'').slice(0,90),p:Math.max(1,Math.min(100,Math.round(+c.p)||0)),i:Math.max(-10,Math.min(10,Math.round(+c.i)||0))})).filter(c=>c.t)})).filter(o=>o.name&&o.outcomes.length>=2);
+ const cl=v=>Math.max(-10,Math.min(10,Math.round(+v)||0)),arr=(a,n)=>Array.isArray(a)&&a.length===n?a.map(cl):null,X=c=>{const h=arr(c.h,3),d=arr(c.d,5);return{i:h?h[1]:cl(c.i),h,d}};
+ const o=r.options.slice(0,MAXO).map(o=>({name:String(o.name||'').slice(0,30),outcomes:(Array.isArray(o.outcomes)?o.outcomes:[]).slice(0,5).map(c=>({t:String(c.t||'').slice(0,90),p:Math.max(1,Math.min(100,Math.round(+c.p)||0)),...X(c)})).filter(c=>c.t)})).filter(o=>o.name&&o.outcomes.length>=2);
  return o.length>=2?o:null}
 function local(q){
  let t=q.replace(/[?.!]+$/,'').replace(/^(should i|do i|can i|shall i|is it better to)\s+/i,'');
@@ -174,50 +205,51 @@ function local(q){
  [{t:'A steady, acceptable result',p:50,i:3},{t:'An unexpected problem appears',p:30,i:-4},{t:'A pleasant surprise shows up',p:20,i:5}]];
  return parts.slice(0,MAXO).map((p,k)=>({name:nm(p),outcomes:T[k%3].map(x=>({...x}))}))}
 function verdict(R,bi){
- const s=[...R.keys()].sort((a,b)=>R[b].ev-R[a].ev),gap=R[s[0]].ev-R[s[1]].ev,n=S.options[bi].name;
+ const s=[...R.keys()].sort((a,b)=>R[b].ev-R[a].ev),gap=R[s[0]].ev-R[s[1]].ev,n=cur[bi].name;
  const risk=R.reduce((m,r,i)=>r.worst<R[m].worst?i:m,0);
  let t=gap<0.5?'The leading options are nearly tied on expected impact, so your risk tolerance and priorities should break the tie.':`“${n}” leads the next best option by ${gap.toFixed(1)} points of expected impact.`;
- if(risk!==bi&&gap>=0.5)t+=` “${S.options[risk].name}” carries the worst downside (${fmt(R[risk].worst)}).`;
+ if(risk!==bi&&gap>=0.5)t+=` “${cur[risk].name}” carries the worst downside (${fmt(R[risk].worst)}).`;
  else if(R[bi].worst<=-6)t+=` Its worst case is still severe (${fmt(R[bi].worst)}).`;
  return t}
 function flip(R){
  const o=[...R.keys()].sort((a,b)=>R[b].ev-R[a].ev),L=o[0],Q=o[1],gap=R[L].ev-R[Q].ev;let lvl,msg;
  if(gap<0.5){lvl='Too close to call';msg='The options are within half a point, so small changes in your assumptions could flip the result.'}
  else{
-  const mk=i=>{const t=R[i].tot,x=S.options[i].outcomes.map(c=>({t:c.t,p:c.p/t,i:c.i}));return{name:S.options[i].name,b:x.reduce((a,c)=>c.i>a.i?c:a),w:x.reduce((a,c)=>c.i<a.i?c:a)}};
+  const mk=i=>{const t=R[i].tot,x=cur[i].outcomes.map(c=>({t:c.t,p:c.p/t,i:c.i}));return{name:cur[i].name,b:x.reduce((a,c)=>c.i>a.i?c:a),w:x.reduce((a,c)=>c.i<a.i?c:a)}};
   const a=mk(L),b=mk(Q),c=[],pt=x=>Math.ceil(x*100);
   const x1=gap/(a.b.i-a.w.i);if(a.b.i>a.w.i&&x1<=a.b.p)c.push({x:x1,m:`If “${a.b.t}” were ${pt(x1)} points less likely, with that chance moving to “${a.w.t}”, “${b.name}” would take the lead.`});
   const x2=gap/(b.b.i-b.w.i);if(b.b.i>b.w.i&&x2<=b.w.p)c.push({x:x2,m:`If “${b.w.t}” were ${pt(x2)} points less likely, with that chance moving to “${b.b.t}”, “${b.name}” would take the lead.`});
-  if(!c.length){lvl='Robust';msg=`No single shift in one outcome’s chance would let “${S.options[Q].name}” overtake “${S.options[L].name}”.`}
+  if(!c.length){lvl='Robust';msg=`No single shift in one outcome’s chance would let “${cur[Q].name}” overtake “${cur[L].name}”.`}
   else{c.sort((u,v)=>u.x-v.x);const m=c[0].x;lvl=m<=.1?'Fragile':m<=.25?'Moderate':'Robust';msg=c[0].m+(lvl==='Fragile'?' A small change in your assumptions could reverse this result.':lvl==='Robust'?' That is a large change, so the result holds up well.':'')}}
  return{lvl,msg}}
 function draw(){
  if(!S){$('#rcard').hidden=true;return}
- $('#rcard').hidden=false;
- const R=S.options.map(an),bi=R.reduce((m,r,i)=>r.ev>R[m].ev?i:m,0),f=flip(R);
+ $('#rcard').hidden=false;cur=V();ctl();
+ const R=cur.map(an),bi=R.reduce((m,r,i)=>r.ev>R[m].ev?i:m,0),f=flip(R);
  const dt=new Date(S.date).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
  $('#cmp').innerHTML=`<p class="eyebrow">${esc(dt)}</p><h3 class="q">${esc(S.title)}</h3>
  <p class="src">${S.ai===false?'Offline template. Not tailored to your decision.':'Estimated by AI from your description.'}</p>
  <div class="brief"><div><span class="eyebrow">Recommendation</span><p>${esc(verdict(R,bi))}</p></div>
- <div><span class="eyebrow">Robustness</span><p><span class="lvl lvl-${f.lvl.split(' ')[0]}">${esc(f.lvl)}.</span> ${esc(f.msg)}</p></div></div>
- <div class="opts">${S.options.map((o,i)=>{const r=R[i];
+ <div><span class="eyebrow">Robustness</span><p><span class="lvl lvl-${f.lvl.split(' ')[0]}">${esc(f.lvl)}.</span> ${esc(f.msg)}</p></div>${hasX()?`<div><span class="eyebrow">Over time</span><p>${esc(overTime())}</p></div>`:''}</div>
+ <div class="opts">${cur.map((o,i)=>{const r=R[i];
  return`<article class="opt ${i===bi?'win':''}"><div class="oh"><h3>${esc(o.name)}</h3>${i===bi?'<span class="rec">Recommended</span>':''}</div>
  <div class="score"><span class="num ${cls(r.ev)}">${fmt(r.ev)}</span><span class="eyebrow">Expected impact</span></div>
  <div class="dv"><i style="${r.ev>=0?'left:50%':'right:50%'};width:${Math.abs(r.ev)*5}%;background:var(${r.ev>=0?'--pos':'--neg'})"></i></div>
  <div class="ax"><span>−10</span><span>0</span><span>+10</span></div>
+ ${hasX()?tl(i):''}
  <dl class="stats"><div><dt>Worst case</dt><dd class="neg">${ims(r.worst)}</dd></div><div><dt>Best case</dt><dd class="pos">${ims(r.best)}</dd></div><div><dt>Good outcome</dt><dd>${r.pos.toFixed(0)}%</dd></div></dl>
  <div class="cols"><span>Possible outcome</span><span>Chance</span><span></span><span>Impact</span></div>
  <ul class="rows">${o.outcomes.map(c=>{const p=Math.round(c.p/r.tot*100);return`<li><span>${esc(c.t)}</span><span class="pb"><i style="width:${p}%"></i></span><span class="pc">${p}%</span><span class="im ${cls(c.i)}">${ims(c.i)}</span></li>`}).join('')}</ul></article>`}).join('')}</div>
- ${S.note?`<p class="note"><strong>Assumptions.</strong> ${esc(S.note.replace(/[.\s]+$/,''))}.</p>`:''}`;
+ ${S.note?`<p class="note"><strong>Assumptions.</strong> ${esc(S.note.replace(/[.\s]+$/,''))}.</p>`:''}${hasX()?`<p class="note">Each outcome is rated from −10 to +10 at 1 month, 1 year and 5 years. Your priorities shift an outcome’s score by how much it affects the areas you rate higher. The figures are estimates, not measurements.</p>`:''}`;
  tree(R)}
 function tree(R){
- const rowH=42,n=S.options.reduce((a,o)=>a+o.outcomes.length,0),Ht=Math.max(n*rowH+24,110),X1=120,X2=330,X3=540;let k=0;
- const oy=S.options.map(o=>o.outcomes.map(()=>24+(k++)*rowH+rowH/2-12));
+ const rowH=42,n=cur.reduce((a,o)=>a+o.outcomes.length,0),Ht=Math.max(n*rowH+24,110),X1=120,X2=330,X3=540;let k=0;
+ const oy=cur.map(o=>o.outcomes.map(()=>24+(k++)*rowH+rowH/2-12));
  const oY=oy.map(y=>y.reduce((a,b)=>a+b)/y.length),rY=oY.reduce((a,b)=>a+b)/oY.length;
  const cv=(x1,y1,x2,y2,c,w,op)=>`<path d="M${x1} ${y1}C${(x1+x2)/2} ${y1},${(x1+x2)/2} ${y2},${x2} ${y2}" fill="none" stroke="${c}" stroke-width="${w}" opacity="${op}"/>`;
  const cut=(s,m)=>s.length>m?s.slice(0,m-1)+'…':s;
  let g=`<rect x="4" y="${rY-17}" width="${X1-24}" height="34" rx="2" fill="var(--ac)"/><text x="${4+(X1-24)/2}" y="${rY+4}" text-anchor="middle" style="fill:var(--onac);font-weight:600">Decision</text>`;
- S.options.forEach((o,a)=>{const r=R[a];
+ cur.forEach((o,a)=>{const r=R[a];
   g+=cv(X1-20,rY,X2,oY[a],'var(--ac)',1.5,.9);
   g+=`<rect x="${X2}" y="${oY[a]-19}" width="160" height="38" rx="2" fill="var(--sf)" stroke="var(--ac)" stroke-width="1.5"/><text x="${X2+80}" y="${oY[a]-3}" text-anchor="middle" style="font-weight:600">${esc(cut(o.name,20))}</text><text class="m" x="${X2+80}" y="${oY[a]+12}" text-anchor="middle">expected ${fmt(r.ev)}</text>`;
   o.outcomes.forEach((c,b)=>{const y=oy[a][b],col=c.i>0?'var(--pos)':c.i<0?'var(--neg)':'var(--mut)',p=Math.round(c.p/r.tot*100);
@@ -277,8 +309,8 @@ const ctr=()=>{$('#ctr').textContent=$('#ttl').value.length+' / 300'};
 $('#ttl').addEventListener('input',()=>{ctr();$('#qbox').hidden=true});
 document.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{$('#ttl').value=b.dataset.ex;ctr();simulate()});
 $('#clr').onclick=()=>{if(H.length&&confirm('Delete all saved decisions?')){H=[];persist();hist()}};
-$('#cp').onclick=async()=>{if(!S)return;const R=S.options.map(an);
- const t=S.title+'\n\n'+S.options.map((o,i)=>o.name+' (expected '+fmt(R[i].ev)+')\n'+o.outcomes.map(c=>'- '+c.t+': '+Math.round(c.p/R[i].tot*100)+'%, impact '+ims(c.i)).join('\n')).join('\n\n')+(S.note?'\n\nAssumptions: '+S.note:'');
+$('#cp').onclick=async()=>{if(!S)return;const R=cur.map(an);
+ const t=S.title+'\n(Impact at '+HZ[hz]+')\n\n'+cur.map((o,i)=>o.name+' (expected '+fmt(R[i].ev)+')\n'+o.outcomes.map(c=>'- '+c.t+': '+Math.round(c.p/R[i].tot*100)+'%, impact '+ims(c.i)).join('\n')).join('\n\n')+(S.note?'\n\nAssumptions: '+S.note:'');
  try{await navigator.clipboard.writeText(t);say('ok','The comparison was copied to your clipboard.',null,'Summary copied')}catch(e){say('err','Your browser blocked copying. Select the text and copy it manually.',null,'Could not copy')}};
 $('#t1').onclick=$('#t2').onclick=e=>{const one=e.target.id==='t1';$('#t1').setAttribute('aria-selected',one);$('#t2').setAttribute('aria-selected',!one);$('#cmp').hidden=!one;$('#tree').hidden=one};
 $('#hist').addEventListener('click',e=>{const d=e.target.dataset;
@@ -288,6 +320,11 @@ $('#qbox').addEventListener('click',e=>{const t=e.target,box=$('#qbox');
  if(t.classList.contains('pick')){const on=t.getAttribute('aria-pressed')==='true';t.closest('fieldset').querySelectorAll('.pick').forEach(b=>b.setAttribute('aria-pressed','false'));t.setAttribute('aria-pressed',on?'false':'true')}
  else if(t.id==='runq'){const q=box.dataset.q,ans=[];box.querySelectorAll('fieldset').forEach((f,i)=>{const k=f.querySelector('[aria-pressed=true]');if(k)ans.push(box._qs[i].q+' '+k.textContent)});box.hidden=true;run(q,ans.length?q+' | Details: '+ans.join('; '):q)}
  else if(t.id==='skq'){box.hidden=true;run(box.dataset.q,box.dataset.q)}});
+$('#ctl').addEventListener('click',e=>{const d=e.target.dataset;let ch=false;
+ if(d.hz!=null){hz=+d.hz;ch=true}
+ else if(d.wk!=null){W[+d.wk]=+d.wv;ch=true}
+ else if(d.wr){W=[1,1,1,1,1];ch=true}
+ if(ch){try{localStorage.setItem('whatif:prio',JSON.stringify(W))}catch(x){}draw()}});
 hist();
 </script>
 </body>
