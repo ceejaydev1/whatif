@@ -13,14 +13,19 @@ function limited(ip) {
   return list.length > 12;
 }
 
+function isDecision(q) {
+  const isQ = /\?\s*$/.test(q) || /^(should|shall|can|could|would|do|does|did|is|are|am|will|which|what|whether|how)\b/i.test(q);
+  return isQ && (/\b(or|vs\.?|versus|rather than|instead of)\b/i.test(q) || /\bbetween\b.+\band\b/i.test(q));
+}
+
 const SYSTEM = `You are a careful decision analyst. Estimate the realistic consequences of the decision the person describes.
 
 Return ONLY a JSON object, no other text:
 {"note":"one sentence stating the key assumptions you made, max 160 characters","options":[{"name":"short option name, max 4 words","outcomes":[{"t":"one concrete consequence, max 80 characters","p":integer percent chance,"i":integer impact -10..10}]}]}
 
 Rules:
-- Use the options the person names. If they name only one action, use "Do it" and "Don't do it". Give 2 or 3 options.
-- Give exactly 3 outcomes per option. They must be mutually exclusive and cover the most likely ways it could go, not rare extremes.
+- Use every option the person names (up to 5). If they name only one action, use "Do it" and "Don't do it". Give at least 2 options.
+- Give 3 to 5 outcomes per option, as many as are realistically distinct. They must be mutually exclusive and cover the most likely ways it could go, not rare extremes.
 - Each option's p values must add up to exactly 100.
 - Calibrate p to real-world base rates for this kind of decision. Avoid false certainty: do not use p above 80 or below 5 unless it is nearly certain. Do not make options suspiciously symmetric.
 - Impact scale: -10 life-changing harm, -5 clearly bad, 0 neutral, +5 clearly good, +10 life-changing benefit. Most everyday outcomes fall between -6 and +6.
@@ -35,8 +40,8 @@ Decision: Should I take a job offer in another city or stay at my current job?
 
 function fix(d) {
   if (!d || !Array.isArray(d.options)) return null;
-  const options = d.options.slice(0, 3).map(o => {
-    const outs = (Array.isArray(o.outcomes) ? o.outcomes : []).slice(0, 4)
+  const options = d.options.slice(0, 5).map(o => {
+    const outs = (Array.isArray(o.outcomes) ? o.outcomes : []).slice(0, 5)
       .map(c => ({ t: String(c.t || '').slice(0, 90), p: Math.max(1, +c.p || 0), i: Math.max(-10, Math.min(10, Math.round(+c.i) || 0)) }))
       .filter(c => c.t);
     const total = outs.reduce((a, c) => a + c.p, 0);
@@ -69,12 +74,12 @@ async function ask(q) {
 }
 
 const QSYS = `You help a person get a better decision analysis. Return ONLY JSON: {"questions":[{"q":"short question, max 70 characters","choices":["short answer","short answer","short answer"]}]}
-Ask exactly 2 questions about the facts that would most change the outcome of the decision (for example budget, deadline, urgency, risk tolerance, current situation) and that the decision text does not already answer. Each question has 3 or 4 short, mutually exclusive choices, max 28 characters each. If the decision already has enough detail, return {"questions":[]}.`;
+Ask 2 to 4 questions about the facts that would most change the outcome of the decision (for example budget, deadline, urgency, risk tolerance, current situation) and that the decision text does not already answer. Each question has 3 to 5 short, mutually exclusive choices, max 28 characters each. If the decision already has enough detail, return {"questions":[]}.`;
 
 function fixQ(d) {
-  const qs = (Array.isArray(d?.questions) ? d.questions : []).slice(0, 2).map(x => ({
+  const qs = (Array.isArray(d?.questions) ? d.questions : []).slice(0, 4).map(x => ({
     q: String(x.q || '').slice(0, 80),
-    choices: (Array.isArray(x.choices) ? x.choices : []).map(c => String(c).slice(0, 30)).filter(Boolean).slice(0, 4),
+    choices: (Array.isArray(x.choices) ? x.choices : []).map(c => String(c).slice(0, 30)).filter(Boolean).slice(0, 5),
   })).filter(x => x.q && x.choices.length >= 2);
   return { questions: qs };
 }
@@ -102,6 +107,8 @@ export default async function handler(req, res) {
 
   const q = String(req.body?.q || '').trim().slice(0, 700);
   if (!q) return res.status(400).json({ error: 'Missing decision' });
+
+  if (!isDecision(q)) return res.status(400).json({ error: 'Not a decision question with at least two choices' });
 
   if (req.body?.mode === 'questions') {
     try { return res.status(200).json(await askQuestions(q)); }

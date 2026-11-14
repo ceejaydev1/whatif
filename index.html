@@ -2,120 +2,147 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>WhatIf – Decision Consequence Simulator</title>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WhatIf · Decision consequence simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f4f5f8;--card:#fff;--tx:#1b2233;--mut:#667089;--bd:#dde1ea;--ac:#4a4fd6;--acs:#e9eafb;--pos:#16896a;--neg:#d0415a;--neu:#8a93a8;--onac:#fff;--warn:#9a6200;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151f;--card:#1b2030;--tx:#e8ebf4;--mut:#9aa3ba;--bd:#2c3348;--ac:#8c90ff;--acs:#262a4a;--pos:#3ed1a3;--neg:#ff7a90;--neu:#7c86a0;--onac:#12151f;--warn:#ffcc66;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#12151f;--card:#1b2030;--tx:#e8ebf4;--mut:#9aa3ba;--bd:#2c3348;--ac:#8c90ff;--acs:#262a4a;--pos:#3ed1a3;--neg:#ff7a90;--neu:#7c86a0;--onac:#12151f;--warn:#ffcc66;color-scheme:dark}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
-main{max-width:1000px;margin:0 auto;padding:20px 16px 60px}
-h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;margin:0;letter-spacing:-.01em}
-h1{font-size:2rem;font-weight:800}
-h2{font-size:1.25rem;margin-bottom:10px}
-.sub{color:var(--mut);margin:4px 0 20px;max-width:60ch}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:16px}
-input,button{font:inherit;color:var(--tx)}
-input[type=text]{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;width:100%;font-size:1.05rem}
-input:focus-visible,button:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
-label{font-size:.85rem;color:var(--mut);display:block;margin-bottom:4px}
-button{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px 14px;cursor:pointer}
-button:hover{border-color:var(--ac)}
-button:disabled{opacity:.6;cursor:wait}
-button.pri{background:var(--ac);border-color:var(--ac);color:var(--onac);font-weight:500}
-.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
-.status{font-size:.9rem;color:var(--mut);margin-top:8px;min-height:1.3em}
-.tabs{display:flex;gap:4px;margin-bottom:12px}
-.tabs button[aria-selected=true]{background:var(--acs);border-color:var(--ac)}
-.cmp{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
-.res{border:1px solid var(--bd);border-radius:10px;padding:12px}
-.res.win{border-color:var(--pos);box-shadow:0 0 0 1px var(--pos)}
-.badge{font-size:.75rem;background:var(--pos);color:#fff;border-radius:99px;padding:1px 8px;margin-left:6px}
-.bar{position:relative;height:12px;background:var(--bg);border-radius:6px;margin:10px 0 4px}
-.bar::after{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--mut)}
-.bar i{position:absolute;top:0;bottom:0;border-radius:6px}
-.stats{display:flex;justify-content:space-between;font-size:.85rem;color:var(--mut);flex-wrap:wrap;gap:4px}
-.ev{font:800 1.8rem "Bricolage Grotesque",sans-serif}
+:root{--bg:#f4f2ed;--sf:#fffdf9;--ink:#15181e;--mut:#5b616d;--rule:#d8d3c7;--wash:#ebe8df;--ac:#1c3a62;--onac:#fff;--pos:#1d6b50;--neg:#a3352e;--warn:#85570a;
+--serif:"Newsreader",Georgia,serif;--sans:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#121417;--sf:#1a1d22;--ink:#ebe8e1;--mut:#9aa0ab;--rule:#2d3138;--wash:#20242a;--ac:#9dbbe6;--onac:#0f1a2b;--pos:#63c49c;--neg:#e8847c;--warn:#e0b25a}}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px}
+.top{border-bottom:1px solid var(--rule)}
+.bar{display:flex;justify-content:space-between;align-items:baseline;padding:16px 20px}
+.mark{font:600 1.35rem var(--serif);letter-spacing:-.01em}
+.tagline,.eyebrow{font:500 .7rem/1.2 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+h1,h2,h3{font-family:var(--serif);font-weight:500;margin:0;letter-spacing:-.012em}
+.intro{padding:48px 0 28px}
+h1{font-size:clamp(1.9rem,4.6vw,2.9rem);line-height:1.12;max-width:20ch}
+.intro p{color:var(--mut);max-width:58ch;margin:16px 0 0;font-size:1.02rem}
+.step{border-top:1px solid var(--rule);padding:28px 0}
+.sh{display:flex;gap:14px;align-items:baseline;font-size:1.35rem;margin-bottom:16px}
+.sh span{font:500 .8rem var(--mono);color:var(--mut)}
+textarea{width:100%;min-height:104px;resize:vertical;background:var(--sf);color:var(--ink);border:1px solid var(--rule);border-radius:3px;padding:14px 16px;font:inherit;font-size:1.05rem;line-height:1.5}
+textarea::placeholder{color:var(--mut);opacity:.8}
+textarea:focus,button:focus-visible,input:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.meta{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:.82rem;color:var(--mut)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px}
+button{font:inherit;cursor:pointer;color:var(--ink)}
+.btn{background:var(--ac);color:var(--onac);border:1px solid var(--ac);border-radius:3px;padding:10px 22px;font-weight:500}
+.btn:hover{filter:brightness(1.12)}.btn:disabled{opacity:.55;cursor:progress}
+.btn2{background:transparent;border:1px solid var(--rule);border-radius:3px;padding:10px 18px}
+.btn2:hover{border-color:var(--ink)}
+.link{background:none;border:0;padding:0;color:var(--ac);text-decoration:underline;text-underline-offset:3px;font-size:.88rem}
+.chk{display:flex;gap:8px;align-items:center;font-size:.9rem;color:var(--mut);margin-top:16px}
+.chk input{accent-color:var(--ac);width:16px;height:16px;margin:0}
+.ex{font-size:.85rem;color:var(--mut);display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.msg{margin-top:18px;padding:12px 16px;background:var(--sf);border:1px solid var(--rule);border-left:3px solid var(--mut);border-radius:3px;font-size:.92rem}
+.msg p{margin:0}.msg .mt{font-weight:600}.msg p+p{margin-top:2px;color:var(--mut)}
+.msg.ok{border-left-color:var(--pos)}.msg.err{border-left-color:var(--neg)}.msg.warn{border-left-color:var(--warn)}.msg.info{border-left-color:var(--ac)}
+.msg details{margin-top:8px;font-size:.78rem;color:var(--mut)}.msg code{display:block;margin-top:4px;font-family:var(--mono);white-space:pre-wrap;word-break:break-word}
+fieldset{border:0;margin:0 0 20px;padding:0}
+legend{font-weight:600;margin-bottom:8px;padding:0}
+.picks{display:flex;gap:8px;flex-wrap:wrap}
+.pick{background:var(--sf);border:1px solid var(--rule);border-radius:3px;padding:7px 14px;font-size:.9rem}
+.pick:hover{border-color:var(--ink)}
+.pick[aria-pressed=true]{background:var(--ac);border-color:var(--ac);color:var(--onac)}
+.tabs{display:flex;gap:26px;align-items:flex-end;border-bottom:1px solid var(--rule);margin-bottom:24px}
+.tabs [role=tab]{background:none;border:0;border-bottom:2px solid transparent;border-radius:0;padding:10px 0;margin-bottom:-1px;color:var(--mut);font-weight:500}
+.tabs [aria-selected=true]{color:var(--ink);border-bottom-color:var(--ac)}
+.tabs .link{margin-left:auto;padding-bottom:12px}
+.q{font-size:clamp(1.3rem,3vw,1.75rem);line-height:1.3;margin:8px 0 6px;max-width:34ch}
+.src{font-size:.82rem;color:var(--mut);margin:0 0 24px}
+.brief{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:0;border:1px solid var(--rule);background:var(--sf);margin-bottom:24px}
+.brief>div{padding:18px 20px}.brief>div+div{border-left:1px solid var(--rule)}
+.brief p{margin:8px 0 0}
+.lvl{font-weight:600}.lvl-Fragile{color:var(--neg)}.lvl-Moderate{color:var(--warn)}.lvl-Robust{color:var(--pos)}
+.opts{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr))}
+.opt{background:var(--sf);border:1px solid var(--rule);border-top:3px solid var(--rule);padding:22px}
+.opt.win{border-top-color:var(--ac)}
+.oh{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.oh h3{font-size:1.3rem}
+.rec{font:600 .68rem var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ac)}
+.score{display:flex;align-items:baseline;gap:12px;margin:14px 0 10px}
+.num{font:500 2.5rem/1 var(--mono);letter-spacing:-.02em}
 .pos{color:var(--pos)}.neg{color:var(--neg)}
-ul.oc{list-style:none;margin:10px 0 0;padding:0;font-size:.9rem}
-ul.oc li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px dashed var(--bd)}
-ul.oc b{white-space:nowrap}
-.verdict{margin-top:12px;padding:10px 12px;background:var(--acs);border-radius:8px}
-.scroll{overflow-x:auto}
-svg text{font:12px "IBM Plex Sans",system-ui,sans-serif;fill:var(--tx)}
-svg .m{fill:var(--mut);font-size:11px}
-.h{display:flex;justify-content:space-between;gap:8px;align-items:center;border-top:1px solid var(--bd);padding:10px 0;flex-wrap:wrap}
-.h:first-of-type{border-top:0}
-.tag{font-size:.8rem;color:var(--mut)}
-textarea{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;width:100%;font:inherit;font-size:1.05rem;color:var(--tx);resize:vertical;min-height:84px}
-textarea:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
-.chip{border-radius:99px;padding:5px 12px;font-size:.85rem}
-.ctr{font-size:.8rem;color:var(--mut);text-align:right;margin-top:2px}
-.tabs{align-items:center}
-.qt{font-size:1.15rem;margin-bottom:2px}
-.hh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
-.hh h2{margin:0}
-.foot{font-size:.8rem;color:var(--mut);max-width:70ch;margin:0 0 8px}
-.msg{margin-top:12px;padding:10px 12px;border-radius:8px;border-left:4px solid var(--neu);background:var(--bg);font-size:.92rem}
-.msg.ok{border-color:var(--pos)}.msg.err{border-color:var(--neg)}.msg.warn{border-color:var(--warn)}.msg.info{border-color:var(--ac)}
-.msg strong{margin-right:6px}
-.msg details{margin-top:6px;font-size:.8rem;color:var(--mut)}
-.msg code{display:block;white-space:pre-wrap;word-break:break-word}
-.qbox{margin-top:12px;border:1px solid var(--bd);border-radius:10px;padding:12px;background:var(--bg)}
-.qbox fieldset{border:0;margin:0 0 10px;padding:0}
-.qbox legend{font-weight:500;margin-bottom:6px;padding:0}
-.picks{display:flex;gap:6px;flex-wrap:wrap}
-.pick{border-radius:99px;padding:5px 12px;font-size:.88rem}
-.pick[aria-pressed=true]{background:var(--acs);border-color:var(--ac)}
-.flip{margin-top:10px;padding:10px 12px;border:1px solid var(--bd);border-radius:8px}
-.flip p{margin:4px 0 0;font-size:.9rem}
-.chk{display:flex;gap:8px;align-items:center;font-size:.9rem;color:var(--tx);margin-top:10px}
+.dv{position:relative;height:6px;background:var(--wash)}
+.dv::after{content:"";position:absolute;left:50%;top:-4px;bottom:-4px;width:1px;background:var(--mut)}
+.dv i{position:absolute;top:0;bottom:0}
+.ax{display:flex;justify-content:space-between;font:400 .68rem var(--mono);color:var(--mut);margin-top:6px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 0;padding:12px 0;border-block:1px solid var(--rule)}
+.stats dt{font:500 .66rem var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.stats dd{margin:4px 0 0;font:500 1rem var(--mono)}
+ul.rows{list-style:none;margin:0;padding:0}
+.rows li{display:grid;grid-template-columns:1fr 56px 44px 36px;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--rule);font-size:.9rem}
+.rows li:first-child{border-top:0}
+.pb{height:4px;background:var(--wash)}.pb i{display:block;height:100%;background:var(--mut)}
+.pc,.im{font:400 .85rem var(--mono);text-align:right}.im{font-weight:500}
+.cols{display:grid;grid-template-columns:1fr 56px 44px 36px;gap:10px;font:500 .66rem var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--mut);padding-bottom:6px}
+.cols span:nth-child(n+3){text-align:right}
+.note{font-size:.84rem;color:var(--mut);margin:22px 0 0;max-width:70ch}
+.scroll{overflow-x:auto;border:1px solid var(--rule);background:var(--sf);padding:12px}
+svg{display:block;min-width:760px;width:100%;height:auto}
+svg text{font:12.5px var(--sans);fill:var(--ink)}svg .m{font:11px var(--mono);fill:var(--mut)}
+.hist{list-style:none;margin:0;padding:0}
+.hist li{display:grid;grid-template-columns:96px 1fr auto;gap:16px;align-items:baseline;padding:12px 0;border-top:1px solid var(--rule)}
+.hist li:first-child{border-top:0}
+.hist .d{font:400 .8rem var(--mono);color:var(--mut)}.hist .t{font-weight:500}.hist .s{font-size:.82rem;color:var(--mut)}
+.hist .a{display:flex;gap:16px}
+.empty{color:var(--mut);margin:0}
+.hh{display:flex;justify-content:space-between;align-items:baseline}.hh .sh{margin-bottom:8px}
+footer{border-top:1px solid var(--rule);padding:22px 0 56px;font-size:.82rem;color:var(--mut)}
+@media(max-width:620px){.brief>div+div{border-left:0;border-top:1px solid var(--rule)}.hist li{grid-template-columns:1fr auto}.hist .d{grid-column:1/-1}.rows li,.cols{grid-template-columns:1fr 44px 36px}.pb,.cols span:nth-child(2){display:none}.btn,.btn2{width:100%}.intro{padding-top:32px}}
 </style>
 </head>
 <body>
-<main>
-<h1>WhatIf</h1>
-<p class="sub">Type a decision. WhatIf works out the options, what could happen with each, how likely it is, and which choice holds up best.</p>
+<header class="top"><div class="wrap bar"><span class="mark">WhatIf</span><span class="tagline">Decision consequence simulator</span></div></header>
+<main class="wrap">
+<section class="intro">
+<h1>Weigh the consequences before you commit.</h1>
+<p>Describe a decision and the options you are choosing between. WhatIf estimates what could happen with each one, how likely it is and how much it matters, then tests how solid the result is.</p>
+</section>
 
-<section class="card" aria-label="Your decision">
-<label for="ttl">Your decision</label>
-<textarea id="ttl" rows="3" maxlength="300" placeholder="Add details for a better estimate. e.g. Should I buy a ₱35,000 laptop now for my capstone, or save for 3 months? My current laptop is slow but works."></textarea>
-<div class="ctr" id="ctr">0 / 300</div>
+<section class="step" aria-labelledby="s1">
+<h2 class="sh" id="s1"><span>01</span>Your decision</h2>
+<textarea id="ttl" maxlength="300" aria-describedby="hint" placeholder="Should I buy a ₱35,000 laptop now for my capstone or save for three more months? My current laptop is slow but still works."></textarea>
+<div class="meta"><span id="hint">Write it as a question that names at least two choices. Details such as amounts and deadlines improve the estimate.</span><span class="mono" id="ctr">0 / 300</span></div>
+<label class="chk"><input type="checkbox" id="fq" checked> Ask a few short follow-up questions first</label>
 <div class="row">
-<button class="pri" id="go" type="button">Simulate</button>
-<span class="tag">Try:</span>
-<button class="chip" type="button" data-ex="Should I buy a ₱35,000 laptop now for my capstone, or save for 3 more months? My current laptop is slow but works.">Laptop now or later</button>
-<button class="chip" type="button" data-ex="Should I take a part-time job now or focus on my capstone until April?">Job or capstone</button>
-<button class="chip" type="button" data-ex="Should I rent a boarding house near school or commute from home every day?">Boarding or commute</button>
+<button class="btn" id="go" type="button">Run simulation</button>
+<span class="ex">Examples:
+<button class="link" type="button" data-ex="Should I buy a ₱35,000 laptop now for my capstone or save for three more months? My current laptop is slow but still works.">Laptop</button>
+<button class="link" type="button" data-ex="Should I take a part-time job now or focus on my capstone until April?">Job or capstone</button>
+<button class="link" type="button" data-ex="Should I rent a boarding house near school, stay at home and commute, or share a rented room with classmates?">Housing</button></span>
 </div>
-<label class="chk"><input type="checkbox" id="fq" checked> Ask me 2 quick follow-up questions first (better accuracy)</label>
-<div id="qbox" class="qbox" hidden></div>
 <div id="st" class="msg" role="status" aria-live="polite" hidden></div>
 </section>
 
-<section class="card" id="rcard" hidden aria-label="Results">
+<section class="step" id="qbox" aria-labelledby="s2" hidden></section>
+
+<section class="step" id="rcard" aria-labelledby="s3" hidden>
+<h2 class="sh" id="s3"><span>03</span>Analysis</h2>
 <div class="tabs" role="tablist">
-<button role="tab" id="t1" aria-selected="true" type="button">Compare outcomes</button>
+<button role="tab" id="t1" aria-selected="true" type="button">Comparison</button>
 <button role="tab" id="t2" aria-selected="false" type="button">Decision tree</button>
-<button id="cp" type="button" style="margin-left:auto">Copy summary</button>
+<button class="link" id="cp" type="button">Copy summary</button>
 </div>
 <div id="cmp"></div>
 <div id="tree" class="scroll" hidden></div>
 </section>
 
-<section class="card" aria-label="Saved decisions">
-<div class="hh"><h2>Previous decisions</h2><button id="clr" type="button">Clear all</button></div>
-<div id="hist"></div>
+<section class="step" aria-labelledby="s4">
+<div class="hh"><h2 class="sh" id="s4"><span>04</span>Previous decisions</h2><button class="link" id="clr" type="button">Clear all</button></div>
+<ul class="hist" id="hist"></ul>
 </section>
-<p class="foot">WhatIf gives estimates to help you think, not predictions. For medical, legal or urgent financial decisions, talk to a professional.</p>
 </main>
+<footer><div class="wrap">WhatIf provides estimates to support your thinking, not predictions. For medical, legal or urgent financial decisions, speak with a qualified professional.</div></footer>
 <script>
-window.onerror=(m)=>{let b=document.getElementById('err');if(!b){b=document.createElement('div');b.id='err';b.style.cssText='background:#d0415a;color:#fff;padding:8px 12px;position:sticky;top:0;z-index:9';document.body.prepend(b)}b.textContent='Something broke: '+m};
-const KEY='whatif:v2';
+window.onerror=m=>{let b=document.getElementById('err');if(!b){b=document.createElement('div');b.id='err';b.style.cssText='background:#a3352e;color:#fff;padding:8px 14px;position:sticky;top:0;z-index:9;font:14px sans-serif';document.body.prepend(b)}b.textContent='Unexpected error: '+m};
+const KEY='whatif:v2',MAXO=5;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let H=[],S=null;
@@ -124,107 +151,120 @@ const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(H))}catch(e){}};
 const sg=n=>n>0?'+':n<0?'−':'';
 const fmt=n=>sg(Math.round(n*10)/10)+Math.abs(n).toFixed(1);
 const cls=n=>n>0?'pos':n<0?'neg':'';
+const ims=n=>sg(n)+Math.abs(n);
 function an(o){const tot=o.outcomes.reduce((a,x)=>a+x.p,0)||1;
- const ev=o.outcomes.reduce((a,x)=>a+(x.p/tot)*x.i,0);
- const pos=o.outcomes.filter(x=>x.i>0).reduce((a,x)=>a+x.p/tot,0)*100;
- const is=o.outcomes.map(x=>x.i);
+ const ev=o.outcomes.reduce((a,x)=>a+(x.p/tot)*x.i,0),pos=o.outcomes.filter(x=>x.i>0).reduce((a,x)=>a+x.p/tot,0)*100,is=o.outcomes.map(x=>x.i);
  return{tot,ev,pos,best:Math.max(...is,0),worst:Math.min(...is,0)}}
+function check(q){
+ const isQ=/\?\s*$/.test(q)||/^(should|shall|can|could|would|do|does|did|is|are|am|will|which|what|whether|how)\b/i.test(q);
+ if(!isQ)return{t:'This is not phrased as a question',x:'Write your decision as a question, for example “Should I rent near campus or commute from home?”'};
+ if(!(/\b(or|vs\.?|versus|rather than|instead of)\b/i.test(q)||/\bbetween\b.+\band\b/i.test(q)))return{t:'No choices to compare',x:'Name at least two options, for example “Should I buy a laptop now or save for three months?”'};
+ return null}
 function clean(r){
  if(!r||!Array.isArray(r.options))return null;
- const opts=r.options.slice(0,4).map(o=>({name:String(o.name||'').slice(0,30),outcomes:(Array.isArray(o.outcomes)?o.outcomes:[]).slice(0,5).map(c=>({t:String(c.t||'').slice(0,90),p:Math.max(1,Math.min(100,Math.round(+c.p)||0)),i:Math.max(-10,Math.min(10,Math.round(+c.i)||0))})).filter(c=>c.t)})).filter(o=>o.name&&o.outcomes.length>=2);
- return opts.length>=2?opts:null}
+ const o=r.options.slice(0,MAXO).map(o=>({name:String(o.name||'').slice(0,30),outcomes:(Array.isArray(o.outcomes)?o.outcomes:[]).slice(0,5).map(c=>({t:String(c.t||'').slice(0,90),p:Math.max(1,Math.min(100,Math.round(+c.p)||0)),i:Math.max(-10,Math.min(10,Math.round(+c.i)||0))})).filter(c=>c.t)})).filter(o=>o.name&&o.outcomes.length>=2);
+ return o.length>=2?o:null}
 function local(q){
  let t=q.replace(/[?.!]+$/,'').replace(/^(should i|do i|can i|shall i|is it better to)\s+/i,'');
- let parts=t.split(/\s+(?:or|vs\.?|versus)\s+/i).map(s=>s.trim()).filter(Boolean);
+ let parts=t.split(/(?:,\s+(?:or\s+)?|\s+(?:or|vs\.?|versus)\s+)/i).map(s=>s.trim()).filter(Boolean);
  if(parts.length<2)parts=['Go ahead: '+t,'Hold off or skip it'];
  const nm=s=>s.length>28?s.slice(0,27)+'…':s;
  const T=[[{t:'It works out close to what you hoped',p:55,i:6},{t:'It costs more time or money than expected',p:30,i:-4},{t:'You wish you had compared more options',p:15,i:-6}],
  [{t:'You stay safe and keep your options open',p:50,i:4},{t:'You miss a good window of opportunity',p:30,i:-5},{t:'Things shift and the delay pays off',p:20,i:6}],
  [{t:'A steady, acceptable result',p:50,i:3},{t:'An unexpected problem appears',p:30,i:-4},{t:'A pleasant surprise shows up',p:20,i:5}]];
- return parts.slice(0,3).map((p,k)=>({name:nm(p),outcomes:T[k%3].map(x=>({...x}))}))}
+ return parts.slice(0,MAXO).map((p,k)=>({name:nm(p),outcomes:T[k%3].map(x=>({...x}))}))}
 function verdict(R,bi){
  const s=[...R.keys()].sort((a,b)=>R[b].ev-R[a].ev),gap=R[s[0]].ev-R[s[1]].ev,n=S.options[bi].name;
  const risk=R.reduce((m,r,i)=>r.worst<R[m].worst?i:m,0);
- let t=gap<0.5?'These options are nearly tied on expected impact, so your risk tolerance and gut feel should break the tie.':`“${esc(n)}” leads by ${gap.toFixed(1)} points on expected impact.`;
- if(risk!==bi&&gap>=0.5)t+=` Note that “${esc(S.options[risk].name)}” has the worst downside (${fmt(R[risk].worst)}).`;
- else if(R[bi].worst<=-6)t+=` Be aware its worst case is still harsh (${fmt(R[bi].worst)}).`;
+ let t=gap<0.5?'The leading options are nearly tied on expected impact, so your risk tolerance and priorities should break the tie.':`“${n}” leads the next best option by ${gap.toFixed(1)} points of expected impact.`;
+ if(risk!==bi&&gap>=0.5)t+=` “${S.options[risk].name}” carries the worst downside (${fmt(R[risk].worst)}).`;
+ else if(R[bi].worst<=-6)t+=` Its worst case is still severe (${fmt(R[bi].worst)}).`;
  return t}
+function flip(R){
+ const o=[...R.keys()].sort((a,b)=>R[b].ev-R[a].ev),L=o[0],Q=o[1],gap=R[L].ev-R[Q].ev;let lvl,msg;
+ if(gap<0.5){lvl='Too close to call';msg='The options are within half a point, so small changes in your assumptions could flip the result.'}
+ else{
+  const mk=i=>{const t=R[i].tot,x=S.options[i].outcomes.map(c=>({t:c.t,p:c.p/t,i:c.i}));return{name:S.options[i].name,b:x.reduce((a,c)=>c.i>a.i?c:a),w:x.reduce((a,c)=>c.i<a.i?c:a)}};
+  const a=mk(L),b=mk(Q),c=[],pt=x=>Math.ceil(x*100);
+  const x1=gap/(a.b.i-a.w.i);if(a.b.i>a.w.i&&x1<=a.b.p)c.push({x:x1,m:`If “${a.b.t}” were ${pt(x1)} points less likely, with that chance moving to “${a.w.t}”, “${b.name}” would take the lead.`});
+  const x2=gap/(b.b.i-b.w.i);if(b.b.i>b.w.i&&x2<=b.w.p)c.push({x:x2,m:`If “${b.w.t}” were ${pt(x2)} points less likely, with that chance moving to “${b.b.t}”, “${b.name}” would take the lead.`});
+  if(!c.length){lvl='Robust';msg=`No single shift in one outcome’s chance would let “${S.options[Q].name}” overtake “${S.options[L].name}”.`}
+  else{c.sort((u,v)=>u.x-v.x);const m=c[0].x;lvl=m<=.1?'Fragile':m<=.25?'Moderate':'Robust';msg=c[0].m+(lvl==='Fragile'?' A small change in your assumptions could reverse this result.':lvl==='Robust'?' That is a large change, so the result holds up well.':'')}}
+ return{lvl,msg}}
 function draw(){
  if(!S){$('#rcard').hidden=true;return}
  $('#rcard').hidden=false;
- const R=S.options.map(an),bi=R.reduce((m,r,i)=>r.ev>R[m].ev?i:m,0);
- $('#cmp').innerHTML=`<h2 class="qt">${esc(S.title)}</h2><p class="tag" style="margin:0 0 12px">${S.ai===false?'Offline estimate: a generic template, not tailored to your decision':'AI estimate'}</p><div class="cmp">${S.options.map((o,i)=>{const r=R[i];
- return`<div class="res ${i===bi?'win':''}"><h3>${esc(o.name)}${i===bi?'<span class="badge">Best expected</span>':''}</h3>
- <div class="ev ${cls(r.ev)}">${fmt(r.ev)}</div><div class="tag">expected impact score (−10 to +10)</div>
- <div class="bar"><i style="${r.ev>=0?'left:50%':'right:50%'};width:${Math.abs(r.ev)*5}%;background:var(${r.ev>=0?'--pos':'--neg'})"></i></div>
- <div class="stats"><span>Worst ${fmt(r.worst)}</span><span>${r.pos.toFixed(0)}% chance of a good result</span><span>Best ${fmt(r.best)}</span></div>
- <ul class="oc">${o.outcomes.map(c=>`<li><span>${esc(c.t)}</span><b class="${cls(c.i)}">${Math.round(c.p/r.tot*100)}% · ${sg(c.i)}${Math.abs(c.i)}</b></li>`).join('')}</ul></div>`}).join('')}</div>
- <div class="verdict">${verdict(R,bi)}</div>${flipHtml(R,bi)}${S.note?`<p class="tag" style="margin:10px 0 0">Assumptions: ${esc(S.note.replace(/[.\s]+$/,''))}. These are estimates, not predictions.</p>`:''}`;
+ const R=S.options.map(an),bi=R.reduce((m,r,i)=>r.ev>R[m].ev?i:m,0),f=flip(R);
+ const dt=new Date(S.date).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
+ $('#cmp').innerHTML=`<p class="eyebrow">${esc(dt)}</p><h3 class="q">${esc(S.title)}</h3>
+ <p class="src">${S.ai===false?'Offline template. Not tailored to your decision.':'Estimated by AI from your description.'}</p>
+ <div class="brief"><div><span class="eyebrow">Recommendation</span><p>${esc(verdict(R,bi))}</p></div>
+ <div><span class="eyebrow">Robustness</span><p><span class="lvl lvl-${f.lvl.split(' ')[0]}">${esc(f.lvl)}.</span> ${esc(f.msg)}</p></div></div>
+ <div class="opts">${S.options.map((o,i)=>{const r=R[i];
+ return`<article class="opt ${i===bi?'win':''}"><div class="oh"><h3>${esc(o.name)}</h3>${i===bi?'<span class="rec">Recommended</span>':''}</div>
+ <div class="score"><span class="num ${cls(r.ev)}">${fmt(r.ev)}</span><span class="eyebrow">Expected impact</span></div>
+ <div class="dv"><i style="${r.ev>=0?'left:50%':'right:50%'};width:${Math.abs(r.ev)*5}%;background:var(${r.ev>=0?'--pos':'--neg'})"></i></div>
+ <div class="ax"><span>−10</span><span>0</span><span>+10</span></div>
+ <dl class="stats"><div><dt>Worst case</dt><dd class="neg">${ims(r.worst)}</dd></div><div><dt>Best case</dt><dd class="pos">${ims(r.best)}</dd></div><div><dt>Good outcome</dt><dd>${r.pos.toFixed(0)}%</dd></div></dl>
+ <div class="cols"><span>Possible outcome</span><span>Chance</span><span></span><span>Impact</span></div>
+ <ul class="rows">${o.outcomes.map(c=>{const p=Math.round(c.p/r.tot*100);return`<li><span>${esc(c.t)}</span><span class="pb"><i style="width:${p}%"></i></span><span class="pc">${p}%</span><span class="im ${cls(c.i)}">${ims(c.i)}</span></li>`}).join('')}</ul></article>`}).join('')}</div>
+ ${S.note?`<p class="note"><strong>Assumptions.</strong> ${esc(S.note.replace(/[.\s]+$/,''))}.</p>`:''}`;
  tree(R)}
 function tree(R){
- const rowH=40,n=S.options.reduce((a,o)=>a+o.outcomes.length,0),Ht=Math.max(n*rowH+20,100),X1=130,X2=330,X3=520;let k=0;
- const oy=S.options.map(o=>o.outcomes.map(()=>20+(k++)*rowH+rowH/2-10));
- const oY=oy.map(ys=>ys.reduce((a,b)=>a+b)/ys.length),rY=oY.reduce((a,b)=>a+b)/oY.length;
- const cv=(x1,y1,x2,y2,c,w)=>`<path d="M${x1} ${y1}C${(x1+x2)/2} ${y1},${(x1+x2)/2} ${y2},${x2} ${y2}" fill="none" stroke="${c}" stroke-width="${w}" opacity=".8"/>`;
+ const rowH=42,n=S.options.reduce((a,o)=>a+o.outcomes.length,0),Ht=Math.max(n*rowH+24,110),X1=120,X2=330,X3=540;let k=0;
+ const oy=S.options.map(o=>o.outcomes.map(()=>24+(k++)*rowH+rowH/2-12));
+ const oY=oy.map(y=>y.reduce((a,b)=>a+b)/y.length),rY=oY.reduce((a,b)=>a+b)/oY.length;
+ const cv=(x1,y1,x2,y2,c,w,op)=>`<path d="M${x1} ${y1}C${(x1+x2)/2} ${y1},${(x1+x2)/2} ${y2},${x2} ${y2}" fill="none" stroke="${c}" stroke-width="${w}" opacity="${op}"/>`;
  const cut=(s,m)=>s.length>m?s.slice(0,m-1)+'…':s;
- let g=`<rect x="10" y="${rY-16}" width="${X1-30}" height="32" rx="8" fill="var(--ac)"/><text x="${10+(X1-30)/2}" y="${rY+4}" text-anchor="middle" style="fill:var(--onac);font-weight:600">Decision</text>`;
+ let g=`<rect x="4" y="${rY-17}" width="${X1-24}" height="34" rx="2" fill="var(--ac)"/><text x="${4+(X1-24)/2}" y="${rY+4}" text-anchor="middle" style="fill:var(--onac);font-weight:600">Decision</text>`;
  S.options.forEach((o,a)=>{const r=R[a];
-  g+=cv(X1-20,rY,X2,oY[a],'var(--ac)',2.5);
-  g+=`<rect x="${X2}" y="${oY[a]-16}" width="150" height="32" rx="8" fill="var(--acs)" stroke="var(--ac)"/><text x="${X2+75}" y="${oY[a]-1}" text-anchor="middle" style="font-weight:600">${esc(cut(o.name,18))}</text><text class="m" x="${X2+75}" y="${oY[a]+11}" text-anchor="middle">expected ${fmt(r.ev)}</text>`;
-  o.outcomes.forEach((c,b)=>{const y=oy[a][b],col=c.i>0?'var(--pos)':c.i<0?'var(--neg)':'var(--neu)',p=Math.round(c.p/r.tot*100);
-   g+=cv(X2+150,oY[a],X3,y,col,1+p/12);
-   g+=`<circle cx="${X3}" cy="${y}" r="5" fill="${col}"/><text x="${X3+12}" y="${y-2}">${esc(cut(c.t,46))}</text><text class="m" x="${X3+12}" y="${y+12}">${p}% chance · impact ${sg(c.i)}${Math.abs(c.i)}</text>`})});
- $('#tree').innerHTML=`<svg width="880" height="${Ht}" viewBox="0 0 880 ${Ht}" role="img" aria-label="Decision tree of options and their possible outcomes">${g}</svg>`}
+  g+=cv(X1-20,rY,X2,oY[a],'var(--ac)',1.5,.9);
+  g+=`<rect x="${X2}" y="${oY[a]-19}" width="160" height="38" rx="2" fill="var(--sf)" stroke="var(--ac)" stroke-width="1.5"/><text x="${X2+80}" y="${oY[a]-3}" text-anchor="middle" style="font-weight:600">${esc(cut(o.name,20))}</text><text class="m" x="${X2+80}" y="${oY[a]+12}" text-anchor="middle">expected ${fmt(r.ev)}</text>`;
+  o.outcomes.forEach((c,b)=>{const y=oy[a][b],col=c.i>0?'var(--pos)':c.i<0?'var(--neg)':'var(--mut)',p=Math.round(c.p/r.tot*100);
+   g+=cv(X2+160,oY[a],X3,y,col,1+p/14,.65);
+   g+=`<circle cx="${X3}" cy="${y}" r="4.5" fill="${col}"/><text x="${X3+14}" y="${y-2}">${esc(cut(c.t,50))}</text><text class="m" x="${X3+14}" y="${y+13}">${p}% chance · impact ${ims(c.i)}</text>`})});
+ $('#tree').innerHTML=`<svg viewBox="0 0 900 ${Ht}" role="img" aria-label="Decision tree showing each option and its possible outcomes">${g}</svg>`}
 function hist(){
  $('#hist').innerHTML=H.length?H.map(h=>{const R=h.options.map(an),bi=R.reduce((m,r,i)=>r.ev>R[m].ev?i:m,0);
- return`<div class="h"><div><strong>${esc(h.title)}</strong><div class="tag">${new Date(h.date).toLocaleDateString()} · best expected: ${esc(h.options[bi].name)} (${fmt(R[bi].ev)})</div></div><div class="row" style="margin:0"><button type="button" data-load="${h.id}">View result</button><button type="button" data-del="${h.id}">Delete</button></div></div>`}).join(''):'<p class="tag" style="margin:0">Nothing yet. Simulate a decision and it is saved here automatically.</p>'}
-function say(type,text,detail){const e=$('#st');
+ return`<li><span class="d">${new Date(h.date).toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'})}</span><div><div class="t">${esc(h.title)}</div><div class="s">Top option: ${esc(h.options[bi].name)} (${fmt(R[bi].ev)})</div></div><span class="a"><button class="link" type="button" data-load="${h.id}">Open</button><button class="link" type="button" data-del="${h.id}">Delete</button></span></li>`}).join(''):'<li class="empty">No saved decisions yet. Each simulation is saved here automatically in this browser.</li>'}
+function say(type,text,detail,title){const e=$('#st');
  if(!type){e.hidden=true;e.innerHTML='';return}
  e.hidden=false;e.className='msg '+type;e.setAttribute('role',type==='err'||type==='warn'?'alert':'status');
- e.innerHTML='<strong>'+({ok:'Success.',warn:'Heads up.',err:'Error.',info:'Working.'}[type])+'</strong>'+esc(text)+(detail?'<details><summary>Technical detail</summary><code>'+esc(detail)+'</code></details>':'')}
+ e.innerHTML=`<p class="mt">${esc(title||{ok:'Simulation complete',warn:'Using an offline estimate',err:'Check your input',info:'Working'}[type])}</p><p>${esc(text)}</p>`+(detail?`<details><summary>Technical detail</summary><code>${esc(detail)}</code></details>`:'')}
 function friendly(m){m=String(m||'');
- if(m==='NETWORK'||/HTTP 404/.test(m))return 'Could not reach the server. Open the deployed website (not a saved file) and check your connection.';
+ if(m==='NETWORK'||/HTTP 404/.test(m))return 'The server could not be reached. Open the deployed website, not a saved file, and check your connection.';
  if(/402|insufficient|balance/i.test(m))return 'The AI account has no credit or its limit is used up.';
  if(/401|invalid api key|authentication/i.test(m))return 'The AI key was rejected. Check AI_API_KEY in Vercel.';
- if(/model_not_found|provider 404/i.test(m))return 'The AI model name is not available. Check AI_MODEL in Vercel.';
+ if(/model_not_found|provider 404/i.test(m))return 'The AI model is not available. Check AI_MODEL in Vercel.';
  if(/429|too many/i.test(m))return 'Too many requests right now. Wait a minute and try again.';
- if(/Missing AI_API_KEY/i.test(m))return 'The server has no AI key set. Add AI_API_KEY in Vercel and redeploy.';
+ if(/Missing AI_API_KEY/i.test(m))return 'The server has no AI key. Add AI_API_KEY in Vercel and redeploy.';
+ if(/Not a decision/i.test(m))return 'The server rejected the input. Write a question that names two or more choices.';
  if(/wrong format|valid answer/i.test(m))return 'The AI replied in an unexpected format. Try again.';
  return 'The AI request failed.'}
-const report=(used,e)=>used?say('ok','Simulation complete. This is an AI estimate: use it to think things through, not to decide for you.'):say('warn','Showing a generic offline estimate instead. '+friendly(e),e);
-function flipHtml(R,bi){
- const ord=[...R.keys()].sort((a,b)=>R[b].ev-R[a].ev),L=ord[0],Q=ord[1],gap=R[L].ev-R[Q].ev;let lvl,msg;
- if(gap<0.5){lvl='Too close to call';msg='The options are within half a point, so small changes in your assumptions could flip the result. Weigh the risks and your own priorities.'}
- else{
-  const mk=i=>{const o=S.options[i],t=R[i].tot,x=o.outcomes.map(c=>({t:c.t,p:c.p/t,i:c.i}));return{name:o.name,best:x.reduce((a,c)=>c.i>a.i?c:a),worst:x.reduce((a,c)=>c.i<a.i?c:a)}};
-  const a=mk(L),b=mk(Q),c=[],pt=x=>Math.ceil(x*100);
-  const x1=gap/(a.best.i-a.worst.i);if(a.best.i>a.worst.i&&x1<=a.best.p)c.push({x:x1,txt:`If “${a.best.t}” were ${pt(x1)} points less likely (that chance moving to “${a.worst.t}”), “${b.name}” would take the lead.`});
-  const x2=gap/(b.best.i-b.worst.i);if(b.best.i>b.worst.i&&x2<=b.worst.p)c.push({x:x2,txt:`If “${b.worst.t}” were ${pt(x2)} points less likely (that chance moving to “${b.best.t}”), “${b.name}” would take the lead.`});
-  if(!c.length){lvl='Robust';msg=`No single shift in one outcome’s chance would let “${S.options[Q].name}” overtake “${S.options[L].name}”.`}
-  else{c.sort((u,v)=>u.x-v.x);const m=c[0].x;lvl=m<=.1?'Fragile':m<=.25?'Moderate':'Robust';msg=c[0].txt+(lvl==='Fragile'?' A small change in your assumptions could reverse this result.':lvl==='Robust'?' That is a large change, so the result holds up well.':'')}}
- return`<div class="flip"><strong>How solid is this result? ${lvl}</strong><p>${esc(msg)}</p></div>`}
-async function askQs(q){
- const b=$('#go');b.disabled=true;say('info','Preparing 2 quick questions to improve accuracy…');
- let qs=[];
- try{const r=await fetch('/api/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({q,mode:'questions'})});
-  if(r.ok)qs=((await r.json()).questions)||[]}catch(e){}
- b.disabled=false;
- if(!qs.length){say('info','Skipped the follow-up questions and simulating directly.');return run(q,q)}
- say('info','Tap an answer for any question you can answer, then press Run simulation. Skipping is fine.');
- const box=$('#qbox');box.hidden=false;box.dataset.q=q;box._qs=qs;
- box.innerHTML=qs.map(x=>`<fieldset><legend>${esc(x.q)}</legend><div class="picks">${x.choices.map(c=>`<button type="button" class="pick" aria-pressed="false">${esc(c)}</button>`).join('')}</div></fieldset>`).join('')+'<div class="row"><button class="pri" id="runq" type="button">Run simulation</button><button id="skq" type="button">Skip questions</button></div>'}
+const report=(u,e)=>u?say('ok','This is an AI estimate. Use it to think the decision through, not to make it for you.'):say('warn','A generic template is shown instead. '+friendly(e),e);
+const post=b=>fetch('/api/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
 async function simulate(){
  const q=$('#ttl').value.trim();
- if(!q){say('err','Type your decision first, then tap Simulate.');return}
+ if(!q){say('err','Type your decision first, then run the simulation.',null,'Nothing to analyse');$('#ttl').focus();return}
+ const bad=check(q);if(bad){say('err',bad.x,null,bad.t);$('#ttl').focus();return}
  $('#qbox').hidden=true;
- if($('#fq').checked)return askQs(q);
- return run(q,q)}
+ return $('#fq').checked?askQs(q):run(q,q)}
+async function askQs(q){
+ const b=$('#go');b.disabled=true;say('info','Preparing a few questions to improve accuracy…');
+ let qs=[];
+ try{const r=await post({q,mode:'questions'});if(r.ok)qs=((await r.json()).questions)||[]}catch(e){}
+ b.disabled=false;
+ if(!qs.length){say('info','No follow-up questions were needed. Running the simulation.');return run(q,q)}
+ say('info','Tap an answer for any question you can answer, then continue. Skipping is fine.');
+ const box=$('#qbox');box.hidden=false;box.dataset.q=q;box._qs=qs;
+ box.innerHTML=`<h2 class="sh" id="s2"><span>02</span>A few quick questions</h2>`+qs.map(x=>`<fieldset><legend>${esc(x.q)}</legend><div class="picks">${x.choices.map(c=>`<button type="button" class="pick" aria-pressed="false">${esc(c)}</button>`).join('')}</div></fieldset>`).join('')+'<div class="row"><button class="btn" id="runq" type="button">Continue to analysis</button><button class="btn2" id="skq" type="button">Skip questions</button></div>'}
 async function run(q,extra){
  const b=$('#go');b.disabled=true;say('info','Simulating possible outcomes…');
  let opts=null,used=false,note='',errmsg='';
  try{
-  const r=await fetch('/api/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({q:extra})});
-  if(r.ok){const jd=await r.json();opts=clean(jd);used=!!opts;if(!opts)errmsg='wrong format';note=String(jd.note||'').slice(0,200)}else{try{errmsg=(await r.json()).error||('HTTP '+r.status)}catch(e){errmsg='HTTP '+r.status}}
+  const r=await post({q:extra});
+  if(r.ok){const jd=await r.json();opts=clean(jd);used=!!opts;if(!opts)errmsg='wrong format';note=String(jd.note||'').slice(0,200)}
+  else{try{errmsg=(await r.json()).error||('HTTP '+r.status)}catch(e){errmsg='HTTP '+r.status}}
  }catch(e){opts=null;errmsg='NETWORK'}
  if(!opts)opts=local(q);
  S={id:'d'+Date.now().toString(36),title:q,date:Date.now(),options:opts,note:used?note:'',ai:used};
@@ -238,8 +278,8 @@ $('#ttl').addEventListener('input',()=>{ctr();$('#qbox').hidden=true});
 document.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{$('#ttl').value=b.dataset.ex;ctr();simulate()});
 $('#clr').onclick=()=>{if(H.length&&confirm('Delete all saved decisions?')){H=[];persist();hist()}};
 $('#cp').onclick=async()=>{if(!S)return;const R=S.options.map(an);
- const t=S.title+'\n\n'+S.options.map((o,i)=>o.name+' (expected '+fmt(R[i].ev)+')\n'+o.outcomes.map(c=>'- '+c.t+': '+Math.round(c.p/R[i].tot*100)+'%, impact '+sg(c.i)+Math.abs(c.i)).join('\n')).join('\n\n')+(S.note?'\n\nAssumptions: '+S.note:'');
- try{await navigator.clipboard.writeText(t);say('ok','Summary copied to your clipboard.')}catch(e){say('err','Could not copy in this browser. Select the text and copy it manually.')}};
+ const t=S.title+'\n\n'+S.options.map((o,i)=>o.name+' (expected '+fmt(R[i].ev)+')\n'+o.outcomes.map(c=>'- '+c.t+': '+Math.round(c.p/R[i].tot*100)+'%, impact '+ims(c.i)).join('\n')).join('\n\n')+(S.note?'\n\nAssumptions: '+S.note:'');
+ try{await navigator.clipboard.writeText(t);say('ok','The comparison was copied to your clipboard.',null,'Summary copied')}catch(e){say('err','Your browser blocked copying. Select the text and copy it manually.',null,'Could not copy')}};
 $('#t1').onclick=$('#t2').onclick=e=>{const one=e.target.id==='t1';$('#t1').setAttribute('aria-selected',one);$('#t2').setAttribute('aria-selected',!one);$('#cmp').hidden=!one;$('#tree').hidden=one};
 $('#hist').addEventListener('click',e=>{const d=e.target.dataset;
  if(d.load){const h=H.find(x=>x.id===d.load);if(h){S=JSON.parse(JSON.stringify(h));$('#ttl').value=S.title;ctr();draw();$('#rcard').scrollIntoView({behavior:'smooth'})}}
